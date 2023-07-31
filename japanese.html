@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create_with_intuitive_test</title>
+  <link href="./japaneseCreateStyle.css" rel="stylesheet"/>
+</head>
+<body>
+  <div id="header">
+    <div id="titles">
+      <p id="editTitle">
+        編集
+      </p> 
+      <p id="previewTitle">
+        プレビュー
+      </p>
+    </div>
+  </div>
+  
+  
+  <div id="editBlock" style="margin-top:100px; overflow:auto">
+    <div>
+      <pre class="editorLine" contenteditable="true"></pre>
+    </div>
+  </div>
+  
+  <div id="divideLine">
+    
+  </div>
+  
+  <div id="previewBlock" style="margin-top:100px;">
+    <canvas id="previewCanvas"></canvas>
+    <input id="updatePreviewButton" type="button" value="プレビュー更新" onclick="updatePreview()"/>
+  </div>
+  
+  <script type="text/javascript" src="./japaneseCreateMain.js"></script>
+  
+</body>
+</html>
