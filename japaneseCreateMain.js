@@ -12,13 +12,13 @@ let flow_data = [];
 // getInformationsOfで取得するにはここに情報の名前(クラス名)を記す必要があるので注意!
 const classNames = ["htmlText"];
 
-const flowStartMatch = new RegExp('フローチャートを開始。');
-const flowEndMatch = new RegExp('フローチャートを終了。');
-const inputMatch = new RegExp('を入力。$');
-const outputMatch = new RegExp('を出力。$');
-const displayMatch = new RegExp('を表示。$');
-const forMatch = new RegExp('回繰り返す。$');
-const whileMatch = new RegExp('まで繰り返す。$');
+const flowStartMatch = new RegExp('^フローチャートを開始$');
+const flowEndMatch = new RegExp('^フローチャートを終了$');
+const inputMatch = new RegExp('を入力$');
+const outputMatch = new RegExp('を出力$');
+const displayMatch = new RegExp('を表示$');
+const forMatch = new RegExp('回繰り返す$');
+const whileMatch = new RegExp('まで繰り返す$');
 const ifMatchLeft = new RegExp('^もし、');
 const ifMatchRight = new RegExp('ならば、$');
 const elseMatch = new RegExp('そうでないならば、');
@@ -95,6 +95,48 @@ function getArrayOfIndentationsOfIfWhichEachBelongs(typeNums,indentations){
     else res.push(-1);
   }
   return res;
+}
+
+// 入力されたlineTextから、記号の中に表示する言葉を選ぶ
+function convertLineText(lineText,typeNum){
+  switch(typeNum){
+    case changeTypeNameToTypeNum("端子"):
+      if(lineText.match(flowStartMatch)) return "開始";
+      else if(lineText.match(flowEndMatch)) return "終了";  
+      break;
+    case changeTypeNameToTypeNum("処理"):
+      return lineText;
+      break;
+    case changeTypeNameToTypeNum("判断"):
+      return lineText.substring(3,lineText.length-4);
+      break;
+    case changeTypeNameToTypeNum("入力・出力"):
+      return lineText;
+      break
+  }
+    
+  
+}
+
+// それぞれに対応する番号を返す(整数型)
+function changeTypeNameToTypeNum(typeName){
+  switch(typeName){
+    case "処理":
+      return 0;
+    case "判断":
+      return 1;
+    case "ループ開始":
+      return 2;
+    case "ループ終了":
+      return 3;
+    case "入力・出力":
+      return 4;
+    case "端子":
+      return 5;
+    default:
+      console.error("定義されていない名前のTypeNameが引数として渡されました。")
+      break;
+  }
 }
 
 function updateFlowData(data){
@@ -181,15 +223,19 @@ function updateFlowData(data){
   }
   
   
+  
+  
   let ifIndentationAt =[];
   
+  // 要改善　else ifの場合に対応してない
   for(let i=0; i<typeNums.length; i++){
-    if(typeNums[i] === 1) ifIndentationAt.push(indentations[i]);
+    if(typeNums[i] === changeTypeNameToTypeNum("判断")) ifIndentationAt.push(indentations[i]);
     else if(indentations[i] >= 1) ifIndentationAt.push(indentations[i]-1);
     else ifIndentationAt.push(-1);
   }
   
   console.log("IFINDENTATION",ifIndentationAt);
+
   
   for(let i=0; i<lineTexts.length; i++){
     // dataの形式
@@ -201,68 +247,66 @@ function updateFlowData(data){
       continue;
     }
     
-    if(elseNextIdx[indentations[i]] != i && typeNum != -100){
+    if(elseNextIdx[indentations[i]] != -1 && elseNextIdx[indentations[i]] != i && typeNum != -100){
+      // console.log("elseNextIdx",elseNextIdx[indentations[i]]);
+      // if(!data[elseNextIdx[indentations[i]]][1].includes(idxAsInData[i])) data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i]);
       elseNextIdx[indentations[i]] = -1;
       isInElse[indentations[i]] = false;
     }
     if(typeNum === 1) elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
     
     let to = [];
-    let text = lineTexts[i];
+    let text = convertLineText(lineTexts[i],typeNum);
+    
+    
+    
     const alignX = indentations[i]-(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
     let deepness = idxAsInData[i];
+    
+    if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
+      //console.log("added" ,idxAsInData[i]);
+      data[elseNextIdx[ifIndentationAt[i]]][1].push(idxAsInData[i]);
+      elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
+    }
     
     // toの更新
     if(i === lineTexts.length-1) to.push(-1);
     else{
-      if(indentations[i] === indentations[i+1]) to.push(i+1);
+      // align-Xが自分以下のものと結ぶ
+      
+      // typeNumにおいてif = 1
+      if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(i+1);
       else{
-        if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
-          data[elseNextIdx[ifIndentationAt[i]]][1].push(idxAsInData[i]);
-          elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
-        }
-        // typeNumにおいてif = 1
-        if(typeNum === 1) to.push(i+1);
-        else{
-          let nex = i+1;
-          // else内なら、表示時に合わせるためにalignXを1引いてしまっているのでその分足してあげる
-          let x = alignX+(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
-          // 自分より左(インデントレベルが低い)の「そうでないならば、」ではないものとつなぐ
-          while(nex < lineTexts.length){
-            if(typeNums[nex] === -100){
-              x = indentations[nex];
-              nex++;
-              while(nex < lineTexts.length){
-                if(typeNums[nex] === -100){
-                  x = indentations[nex];
-                  nex++;
-                  continue; 
-                }
-                if(indentations[nex] <= x) break;
-                nex++;
-              }
-              break;
-            }
-            if(indentations[nex] < x) break;
+        // Elseをもたないifもここと同じ処理をする。
+        let nex = i+1;
+        // else内なら、表示時に合わせるためにalignXを1引いてしまっているのでその分足してあげる
+        let x = alignX+(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
+        // 自分より左(インデントレベルが低い)の「そうでないならば、」ではないものとつなぐ
+        while(nex < lineTexts.length){
+          if(typeNums[nex] === -100){
+            x = indentations[nex];
             nex++;
+            continue; 
           }
-          
-          if(nex >= lineTexts.length) console.error("自分より左の記号と結ぶときに最後まで該当するものが見つかりませんでした。");
-          
-          to.push(idxAsInData[nex]);
-          
-          if(isInElse[ifIndentationAt[i]]){
-            isInElse[ifIndentationAt[i]] = false;
-            elseNextIdx[ifIndentationAt[i]] = -1;
-          }
+          if(indentations[nex] <= x) break;
+          nex++;
+        }
+
+        if(nex >= lineTexts.length){
+          console.error("自分より左の記号と結ぶときに最後まで該当するものが見つかりませんでした。");
+          to.push(-1);
+        }
+        else to.push(idxAsInData[nex]);
+
+        if(isInElse[ifIndentationAt[i]]){
+          isInElse[ifIndentationAt[i]] = false;
+          elseNextIdx[ifIndentationAt[i]] = -1;
         }
       }
+      
     }
     
-    
-    
-    data.push([typeNum,to,text,alignX,deepness]);
-    
+    data.push([typeNum,to,text,alignX,deepness]);  
   }
   
   console.log("updated data",data);
