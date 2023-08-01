@@ -222,8 +222,12 @@ function updateFlowData(data){
     }
   }
   
-  
-  
+//   // ifのindexes(indexはidxAsInDataのもの)
+//   let ifIdxes = [];
+//   for(let i=0; i<idxAsInData.length; i++){
+//     if(typeNums[i] === changeTypeNameToTypeNum("判断")) ifIdxes.push(idxAsInData[i]);
+//   }
+//   console.log("idxOfIf",ifIdxes);
   
   let ifIndentationAt =[];
   
@@ -235,7 +239,11 @@ function updateFlowData(data){
   }
   
   console.log("IFINDENTATION",ifIndentationAt);
-
+  
+  // 次のそのindentLevelの記号のdeepnessを入れておく(ifの始まり、終わりにも更新あり)
+  let eachMaxDeepness = [];
+  eachMaxDeepness.length = maxIndentationLevel+1;
+  eachMaxDeepness.fill(0);
   
   for(let i=0; i<lineTexts.length; i++){
     // dataの形式
@@ -247,21 +255,33 @@ function updateFlowData(data){
       continue;
     }
     
-    if(elseNextIdx[indentations[i]] != -1 && elseNextIdx[indentations[i]] != i && typeNum != -100){
+    if((ifIndentationAt[i] === -1 || ifIndentationAt[i] === indentations[i])&& typeNum != -100){
       // console.log("elseNextIdx",elseNextIdx[indentations[i]]);
       // if(!data[elseNextIdx[indentations[i]]][1].includes(idxAsInData[i])) data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i]);
+      //console.log("not else from",idxAsInData[i]);
       elseNextIdx[indentations[i]] = -1;
       isInElse[indentations[i]] = false;
+      
+      // -yes節とno節で深い方のもの+1とする- → 自分より右のもの全ての中で一番深いやつ+1
+      //console.log("max deepness",eachMaxDeepness[indentations[i]],eachMaxDeepness[indentations[i]+1]);
+      
+      let nowMaxDeepnessRight = -1;
+      for(let indent=indentations[i]; indent<eachMaxDeepness.length; indent++) nowMaxDeepnessRight = Math.max(nowMaxDeepnessRight,eachMaxDeepness[indent]);
+      
+      eachMaxDeepness[indentations[i]] = nowMaxDeepnessRight;
     }
     if(typeNum === 1) elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
     
     let to = [];
     let text = convertLineText(lineTexts[i],typeNum);
     
-    
-    
     const alignX = indentations[i]-(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
-    let deepness = idxAsInData[i];
+    let deepness = eachMaxDeepness[alignX];
+    console.log("deepness",deepness);
+    eachMaxDeepness[alignX]++;
+    
+    if(typeNum === changeTypeNameToTypeNum("判断")) eachMaxDeepness[indentations[i]+1] = eachMaxDeepness[indentations[i]];
+    // ifそれぞれの if記号とyes節のインデントの差(diff)をもって上げたほうがいいかも↑にも使える(多重ifのときに活躍)
     
     if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
       //console.log("added" ,idxAsInData[i]);
@@ -297,11 +317,6 @@ function updateFlowData(data){
           to.push(-1);
         }
         else to.push(idxAsInData[nex]);
-
-        if(isInElse[ifIndentationAt[i]]){
-          isInElse[ifIndentationAt[i]] = false;
-          elseNextIdx[ifIndentationAt[i]] = -1;
-        }
       }
       
     }
