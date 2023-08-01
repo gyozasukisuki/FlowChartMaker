@@ -284,6 +284,17 @@ function shapingProcessRects(){
       
       // processTextの更新
       newProcessRect.children[0].children[0].children[10].value = processRects[i].children[10].value;
+      
+      
+      if(changeTypeNameToTypeNum(typeNames[i]) === changeTypeNameToTypeNum("判断")){
+        // interFlowToLabel.style.display = "inline-block";と同じことをする
+        newProcessRect.children[0].children[0].children[1].style.display = "inline-block";
+        // interFlowToText.style.display = "inline-block";と同じことをする
+        newProcessRect.children[0].children[0].children[2].style.display = "inline-block";
+        newProcessRect.children[0].children[0].children[2].value = processRects[i].children[2].value;
+      }
+      
+      
       deleteProcessRect(processRects[i].children[0]);
       
       processRects[idx].parentNode.parentNode.appendChild(newProcessRect);
@@ -304,6 +315,14 @@ function shapingProcessRects(){
       
       // processTextの更新
       processRects[idx].children[10].value = processRects[i].children[10].value;  
+      
+      if(changeTypeNameToTypeNum(typeNames[i]) === changeTypeNameToTypeNum("判断")){
+        // interFlowToLabel.style.display = "inline-block";と同じことをする
+        processRects[idx].children[1].style.display = "inline-block";
+        // interFlowToText.style.display = "inline-block";と同じことをする
+        processRects[idx].children[2].style.display = "inline-block";
+        processRects[idx].children[2].value = processRects[i].children[2].value;
+      }
       
       // children[0]はdeleteButton
       deleteProcessRect(processRects[i].children[0]);
