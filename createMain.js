@@ -901,3 +901,7 @@ window.addEventListener('scroll', () => {
   divideLineElement.style.left = -window.pageXOffset + 'px';
   titlesDiv.style.left = -window.pageXOffset + 'px';
 })
+
+window.onbeforeunload = (e) => {
+    e.returnValue = "本当にページを離れますか?";
+}
