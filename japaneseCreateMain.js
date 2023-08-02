@@ -19,6 +19,7 @@ const outputMatch = new RegExp('を出力$');
 const displayMatch = new RegExp('を表示$');
 const forMatch = new RegExp('回繰り返す$');
 const whileMatch = new RegExp('まで繰り返す$');
+const loopEndMatch = new RegExp('^ループを終了$');
 const ifMatchLeft = new RegExp('^もし、');
 const ifMatchRight = new RegExp('ならば、$');
 const elseMatch = new RegExp('そうでないならば、');
@@ -708,3 +709,7 @@ window.addEventListener('scroll', () => {
   divideLineElement.style.left = -window.pageXOffset + 'px';
   titlesDiv.style.left = -window.pageXOffset + 'px';
 })
+
+window.onbeforeunload = (e) => {
+    e.returnValue = "本当にページを離れますか?";
+}
