@@ -212,6 +212,8 @@ function updateFlowData(data){
   let idxAsInData = [];
   idxAsInData.length = typeNums.length;
   
+  let numberOfIdxAsInData = -1;
+  
   {
     let cnt = 0;
     for(let i=0; i<idxAsInData.length; i++){
@@ -220,14 +222,35 @@ function updateFlowData(data){
         cnt++;
       }else idxAsInData[i] = -1;
     }
+    
+    numberOfIdxAsInData = cnt;
   }
   
-//   // ifのindexes(indexはidxAsInDataのもの)
-//   let ifIdxes = [];
-//   for(let i=0; i<idxAsInData.length; i++){
-//     if(typeNums[i] === changeTypeNameToTypeNum("判断")) ifIdxes.push(idxAsInData[i]);
-//   }
-//   console.log("idxOfIf",ifIdxes);
+  
+  //console.log(numberOfIdxAsInData);
+  
+  // ifのindexes(indexはidxAsInDataのもの)
+  let ifIdxes = [];
+  for(let i=0; i<idxAsInData.length; i++){
+    if(typeNums[i] === changeTypeNameToTypeNum("判断")) ifIdxes.push(idxAsInData[i]);
+  }
+  console.log("idxesOfIf",ifIdxes);
+  
+  // if以外はfalse ifでelse節を持っているものはtrue そうでないならfalse　インデックスはidxAsInDataである
+  let haveElse = [];
+  haveElse.length = numberOfIdxAsInData;
+  haveElse.fill(false);
+  ifIdxes.forEach((ifIdx) => {
+    for(let idx = ifIdx+1; idx<typeNums.length; idx++){
+      if(typeNums[idx] === -100 && indentations[idx] === indentations[ifIdx]){
+        haveElse[ifIdx] = true;
+        break;
+      }
+      if(indentations[idx] <= indentations[ifIdx]) break;
+    }
+  });
+  
+  console.log("haveElseArray",haveElse);
   
   let ifIndentationAt =[];
   
@@ -296,8 +319,9 @@ function updateFlowData(data){
       
       // typeNumにおいてif = 1
       if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(i+1);
-      else{
-        // Elseをもたないifもここと同じ処理をする。
+      
+      if(typeNum !== changeTypeNameToTypeNum("判断") || !(haveElse[idxAsInData[i]])){
+        // 判断ではないか、判断ではあるがelse節をもっていないなら
         let nex = i+1;
         // else内なら、表示時に合わせるためにalignXを1引いてしまっているのでその分足してあげる
         let x = alignX+(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
