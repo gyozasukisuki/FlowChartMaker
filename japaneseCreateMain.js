@@ -12,6 +12,18 @@ let flow_data = [];
 // getInformationsOfで取得するにはここに情報の名前(クラス名)を記す必要があるので注意!
 const classNames = ["htmlText"];
 
+// typeNumの順番でハイライトの色が決まっている(処理はなし)
+/*  
+    0 = Process
+    1 = If
+    2 = ForStart
+    3 = ForEnd
+    4 = Input and Output
+    5 = Start and Goal
+    6 = Else
+*/
+const highlightColors = ["none","green","blue","blue","purple","orange","green"];
+
 const flowStartMatch = new RegExp('^フローチャートを開始$');
 const flowEndMatch = new RegExp('^フローチャートを終了$');
 const inputMatch = new RegExp('を入力$');
@@ -24,6 +36,7 @@ const ifMatchLeft = new RegExp('^もし、');
 const ifMatchRight = new RegExp('ならば、$');
 const elseMatch = new RegExp('そうでないならば、');
 
+let isCtrlPressing = false;
 
 // 1.和文による生成
 
@@ -58,6 +71,7 @@ Type ->
     3 = ForEnd
     4 = Input and Output
     5 = Start and Goal
+    6 = Else
     
 */
 
@@ -79,10 +93,49 @@ function getTypeOf(lineText){
   }else if(lineText.match(ifMatchLeft) && lineText.match(ifMatchRight)){
     // if
     return 1;
-  }else if(!lineText.match(elseMatch)){
+  }else if(lineText.match(elseMatch)){
+    // else
+    return 6;
+  }else{
     // Process
     return 0;
-  }else return -1;
+  }
+}
+
+// 処理以外の記号を表すと認識された行にアンダーラインを引く
+function sentenceColoring(){
+  const editorLines = document.getElementsByClassName("editorLine");
+  
+  for(let i=0; i<editorLines.length; i++){
+    const typeNum = getTypeOf(editorLines[i].innerHTML.trim());
+    const colorIdx = typeNum;
+    
+    if(colorIdx === 0) editorLines[i].style.textDecoration = "none"; // process
+    else{
+      editorLines[i].style.textDecoration = "underline";
+      editorLines[i].style.textDecorationColor = highlightColors[colorIdx];
+    }
+    
+  }
+}
+
+function getLineTextsBy(htmlTexts){
+  let lineTexts = [];
+  // indentationsとlineTextsのデータを入れる
+  for(let i=0; i<htmlTexts.length; i++){
+    for(let j=0; j<htmlTexts[i].length; j++){
+      if(htmlTexts[i][j] !== "\t" && htmlTexts[i][j] !== '\b' && htmlTexts[i][j] !== '&nbsp;'){
+        lineTexts.push(htmlTexts[i].trim());
+        break;
+      }
+    }
+  }
+  // ""(空文字)の部分は取り除く
+  for(let i=0; i<lineTexts.length; i++){
+    if(lineTexts[i] == ""){
+      lineTexts.splice(i,1);
+    }
+  }
 }
 
 // その行が、どのインデントのifに属しているか(ifに属していない場合は-1、ifに関してはそれ自身のインデントを入れる)
@@ -113,10 +166,12 @@ function convertLineText(lineText,typeNum){
       break;
     case changeTypeNameToTypeNum("入力・出力"):
       return lineText;
-      break
+      break;
+    default:
+      console.error("テキストの変換が定義されていません");
+      return;
+      break;
   }
-    
-  
 }
 
 // それぞれに対応する番号を返す(整数型)
@@ -134,6 +189,8 @@ function changeTypeNameToTypeNum(typeName){
       return 4;
     case "端子":
       return 5;
+    case "条件不一致":
+      return 6;
     default:
       console.error("定義されていない名前のTypeNameが引数として渡されました。")
       break;
@@ -199,14 +256,12 @@ function updateFlowData(data){
   for(let i=0; i<lineTexts.length; i++){
     let typeNum = getTypeOf(lineTexts[i]);
     
-    if(typeNum === -1){
-      //記号が定められていないもの
-      if(lineTexts[i].match(elseMatch)){
-        //そうでなければ
-        typeNum = -100;
-        elseNum++;
-      }
+    //記号が定められていないもの
+    if(typeNum === changeTypeNameToTypeNum("条件不一致")){
+      //そうでなければ
+      elseNum++;
     }
+    
     typeNums.push(typeNum);
   }
   
@@ -218,7 +273,7 @@ function updateFlowData(data){
   {
     let cnt = 0;
     for(let i=0; i<idxAsInData.length; i++){
-      if(typeNums[i] !== -100){
+      if(typeNums[i] !== changeTypeNameToTypeNum("条件不一致")){
         idxAsInData[i] = cnt;
         cnt++;
       }else idxAsInData[i] = -1;
@@ -243,7 +298,7 @@ function updateFlowData(data){
   haveElse.fill(false);
   ifIdxes.forEach((ifIdx) => {
     for(let idx = ifIdx+1; idx<typeNums.length; idx++){
-      if(typeNums[idx] === -100 && indentations[idx] === indentations[ifIdx]){
+      if(typeNums[idx] === changeTypeNameToTypeNum("条件不一致") && indentations[idx] === indentations[ifIdx]){
         haveElse[ifIdx] = true;
         break;
       }
@@ -274,12 +329,13 @@ function updateFlowData(data){
     // sequence -> flow_data = [(data1),(data2), ...] (dataN) = [(int)Type,[(int)To1,(int)To2, ...],(String)text,(int)align-x,(int)deepness,(auto)Other];
     // ただし、align-x,deepnessは0-indexed
     let typeNum = typeNums[i];
-    if(typeNum === -100){
+    if(typeNum === changeTypeNameToTypeNum("条件不一致")){
       isInElse[indentations[i]] = true;
+      data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i+1]);
       continue;
     }
     
-    if((ifIndentationAt[i] === -1 || ifIndentationAt[i] === indentations[i])&& typeNum != -100){
+    if((ifIndentationAt[i] === -1 || ifIndentationAt[i] === indentations[i])&& typeNum != changeTypeNameToTypeNum("条件不一致")){
       // console.log("elseNextIdx",elseNextIdx[indentations[i]]);
       // if(!data[elseNextIdx[indentations[i]]][1].includes(idxAsInData[i])) data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i]);
       //console.log("not else from",idxAsInData[i]);
@@ -307,11 +363,12 @@ function updateFlowData(data){
     if(typeNum === changeTypeNameToTypeNum("判断")) eachMaxDeepness[indentations[i]+1] = eachMaxDeepness[indentations[i]];
     // ifそれぞれの if記号とyes節のインデントの差(diff)をもって上げたほうがいいかも↑にも使える(多重ifのときに活躍)
     
-    if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
-      //console.log("added" ,idxAsInData[i]);
-      data[elseNextIdx[ifIndentationAt[i]]][1].push(idxAsInData[i]);
-      elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
-    }
+//     if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
+//       //console.log("added" ,idxAsInData[i]);
+//       data[elseNextIdx[ifIndentationAt[i]]][1].push(idxAsInData[i]);
+//       elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
+      
+//     }
     
     // toの更新
     if(i === lineTexts.length-1) to.push(-1);
@@ -320,7 +377,6 @@ function updateFlowData(data){
       
       // typeNumにおいてif = 1
       if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(i+1);
-      
       if(typeNum !== changeTypeNameToTypeNum("判断") || !(haveElse[idxAsInData[i]])){
         // 判断ではないか、判断ではあるがelse節をもっていないなら
         let nex = i+1;
@@ -328,7 +384,7 @@ function updateFlowData(data){
         let x = alignX+(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
         // 自分より左(インデントレベルが低い)の「そうでないならば、」ではないものとつなぐ
         while(nex < lineTexts.length){
-          if(typeNums[nex] === -100){
+          if(typeNums[nex] === changeTypeNameToTypeNum("条件不一致")){
             x = indentations[nex];
             nex++;
             continue; 
@@ -356,6 +412,8 @@ function updateFlowData(data){
 document.addEventListener("keydown",(e) =>{
   if(document.activeElement.className !== "editorLine") return;
   
+  if(e.key === "Control") isCtrlPressing = true;
+  
   if(e.key === "Enter"){
     e.preventDefault();
     console.log("Enter is input!!");
@@ -363,7 +421,10 @@ document.addEventListener("keydown",(e) =>{
     // ↓Enterキーが入力されたときにカーソルがのっていた要素
     //console.log(document.activeElement);
     const newLine = createNewLineElement();
-    document.activeElement.after(newLine);
+    
+    // Enter -> 下に Ctrl+Enter -> 上に
+    if(!isCtrlPressing) document.activeElement.after(newLine);
+    else document.activeElement.before(newLine);
     newLine.focus();
   }
   if(e.key === "ArrowUp"){
@@ -396,8 +457,17 @@ document.addEventListener("keydown",(e) =>{
     }
   }
   
-  console.log(e.key,"is entered");
+  //console.log(e.key,"is entered");
 });
+
+document.addEventListener("keyup",(e) =>{
+  if(document.activeElement.className !== "editorLine") return;
+  if(e.key === "Control") isCtrlPressing = false;
+  //console.log(e.key,"is upped");
+});
+
+// 文章のハイライト/10s
+setInterval("sentenceColoring()", 10000);
 
 // 2.プレビュー関連
 
@@ -405,6 +475,7 @@ function updatePreview(){
   updateFlowData(flow_data);
   const dataAlignX = calcAlignX(flow_data);
   drawToCanvas(flow_data,dataAlignX);
+  sentenceColoring();
 }
 
 //以下、script.jsのコピー
@@ -419,7 +490,8 @@ Type ->
     2 = ForStart
     3 = ForEnd
     4 = Input and Output
-    4 = Start and Goal
+    5 = Start and Goal
+    6 = Else
     
 */
 
