@@ -10,7 +10,7 @@
 
 
 // 1.作成用UI
-const types = ["処理","判断","ループ開始","ループ終了","入力・出力","端子"];
+const types = ["処理","判断","ループ始端","ループ終端","データ","端子"];
 //追加されたときに、横側にもう一つprocessRectを追加すべきtypeの配列
 const addRightRectType = ["判断"];
 
@@ -456,11 +456,11 @@ function changeTypeNameToTypeNum(typeName){
       return 0;
     case "判断":
       return 1;
-    case "ループ開始":
+    case "ループ始端":
       return 2;
-    case "ループ終了":
+    case "ループ終端":
       return 3;
-    case "入力・出力":
+    case "データ":
       return 4;
     case "端子":
       return 5;
@@ -712,7 +712,7 @@ function drawProcessShape(flow_data,i,alignX,ctx){
 
 function drawForStartShape(flow_data,i,alignX,ctx){
   //へこむ長さ
-  const dent = Math.round(rectW*0.1);
+  const dent = Math.round(rectH*0.4);
   ctx.moveTo(alignX*(flow_data[i][3]+1)-rectW/2+dent,20+padding*flow_data[i][4]);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]+dent);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]+rectH);
@@ -726,7 +726,7 @@ function drawForStartShape(flow_data,i,alignX,ctx){
 // ForStartShapeの上下反転版
 function drawForEndShape(flow_data,i,alignX,ctx){
   //へこむ長さ
-  const dent = Math.round(rectW*0.1);
+  const dent = Math.round(rectH*0.4);
   ctx.moveTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]+rectH-dent);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2+dent,20+padding*flow_data[i][4]+rectH);
