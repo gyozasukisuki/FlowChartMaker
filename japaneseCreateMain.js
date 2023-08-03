@@ -31,10 +31,18 @@ const outputMatch = new RegExp('を出力$');
 const displayMatch = new RegExp('を表示$');
 const forMatch = new RegExp('回繰り返す$');
 const whileMatch = new RegExp('まで繰り返す$');
-const loopEndMatch = new RegExp('^ループを終了$');
+const loopEndMatch = new RegExp('^ループの終了地点$');
 const ifMatchLeft = new RegExp('^もし、');
 const ifMatchRight = new RegExp('ならば、$');
 const elseMatch = new RegExp('そうでないならば、');
+
+const forcedTerminalMatch = new RegExp('^「「端子」」');
+const forcedProcessMatch = new RegExp('^「「処理」」');
+const forcedIfMatch = new RegExp('^「「判断」」');
+const forcedElseMatch = new RegExp('^「「条件不一致」」');
+const forcedLoopStartMatch = new RegExp('^「「反復開始」」');
+const forcedLoopEndMatch = new RegExp('^「「反復終了」」');
+const forcedIOMatch = new RegExp('^「「ファイル入出力」」');
 
 let isCtrlPressing = false;
 
@@ -77,6 +85,15 @@ Type ->
 
 // 対応している種類は上記
 function getTypeOf(lineText){
+  if(lineText.match(forcedTerminalMatch)) return 5;
+  else if(lineText.match(forcedProcessMatch)) return 0;
+  else if(lineText.match(forcedIfMatch)) return 1;
+  else if(lineText.match(forcedElseMatch)) return 6;
+  else if(lineText.match(forcedLoopStartMatch)) return 2;
+  else if(lineText.match(forcedLoopEndMatch)) console.error("not defined process forcedLoopEnd Match");
+  else if(lineText.match(forcedIOMatch)) return 4;
+  
+  
   if(lineText.match(flowStartMatch) || lineText.match(flowEndMatch)){
     //端子
     return 5;
@@ -156,16 +173,20 @@ function convertLineText(lineText,typeNum){
   switch(typeNum){
     case changeTypeNameToTypeNum("端子"):
       if(lineText.match(flowStartMatch)) return "開始";
-      else if(lineText.match(flowEndMatch)) return "終了";  
+      else if(lineText.match(flowEndMatch)) return "終了";
+      else return lineText.substr(7); // 「「端子」」(空白)を抜いたテキスト
       break;
     case changeTypeNameToTypeNum("処理"):
-      return lineText;
+      if(lineText.match(forcedProcessMatch)) return lineText.substr(7);
+      else return lineText;
       break;
     case changeTypeNameToTypeNum("判断"):
-      return lineText.substring(3,lineText.length-4);
+      if(lineText.match(forcedIfMatch)) return lineText.substr(7);
+      else return lineText.substring(3,lineText.length-4);
       break;
     case changeTypeNameToTypeNum("入力・出力"):
-      return lineText;
+      if(lineText.match(forcedIOMatch)) return lineText.substr(12); // 「「ファイル入出力」」(空白)
+      else return lineText;
       break;
     default:
       console.error("テキストの変換が定義されていません");
