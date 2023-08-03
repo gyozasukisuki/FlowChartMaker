@@ -191,16 +191,16 @@ function convertLineText(lineText,typeNum){
       else return lineText.substring(3,lineText.length-4);
       break;
       
-    case changeTypeNameToTypeNum("入力・出力"):
+    case changeTypeNameToTypeNum("データ"):
       if(lineText.match(forcedIOMatch)) return lineText.substr(12); // 「「ファイル入出力」」(空白)
       else return lineText;
       break;
       
-    case changeTypeNameToTypeNum("ループ開始"):
+    case changeTypeNameToTypeNum("ループ始端"):
       if(lineText.match(forcedLoopStartMatch)) return lineText.substr(9); // 「「反復開始」」(空白)
       else return lineText.substring(0,lineText.length-4); // ---間繰り返す
     
-    case changeTypeNameToTypeNum("ループ終了"):
+    case changeTypeNameToTypeNum("ループ終端"):
       if(lineText.match(forcedLoopEndMatch)) return lineText.substr(9);
       else return "";
     
@@ -218,11 +218,11 @@ function changeTypeNameToTypeNum(typeName){
       return 0;
     case "判断":
       return 1;
-    case "ループ開始":
+    case "ループ始端":
       return 2;
-    case "ループ終了":
+    case "ループ終端":
       return 3;
-    case "入力・出力":
+    case "データ":
       return 4;
     case "端子":
       return 5;
@@ -301,12 +301,12 @@ function updateFlowData(data){
     for(let i=0; i<loopIndentationDiff.length; i++){
       // ループ開始の時にDiffをインクリメント終了の時デクリメント
       
-      if(typeNums[i] === changeTypeNameToTypeNum("ループ開始")){
+      if(typeNums[i] === changeTypeNameToTypeNum("ループ始端")){
         loopIndentationDiff[i] = cnt;
         cnt++;
         continue;
       }
-      else if(typeNums[i] === changeTypeNameToTypeNum("ループ終了")) cnt--;
+      else if(typeNums[i] === changeTypeNameToTypeNum("ループ終端")) cnt--;
       
       loopIndentationDiff[i] = cnt;
     }
@@ -654,7 +654,7 @@ function drawProcessShape(flow_data,i,alignX,ctx){
 
 function drawForStartShape(flow_data,i,alignX,ctx){
   //へこむ長さ
-  const dent = Math.round(rectW*0.1);
+  const dent = Math.round(rectH*0.4);
   ctx.moveTo(alignX*(flow_data[i][3]+1)-rectW/2+dent,20+padding*flow_data[i][4]);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]+dent);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]+rectH);
@@ -668,7 +668,7 @@ function drawForStartShape(flow_data,i,alignX,ctx){
 // ForStartShapeの上下反転版
 function drawForEndShape(flow_data,i,alignX,ctx){
   //へこむ長さ
-  const dent = Math.round(rectW*0.1);
+  const dent = Math.round(rectH*0.4);
   ctx.moveTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2,20+padding*flow_data[i][4]+rectH-dent);
   ctx.lineTo(alignX*(flow_data[i][3]+1)-rectW/2+dent,20+padding*flow_data[i][4]+rectH);
