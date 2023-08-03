@@ -29,8 +29,9 @@ const flowEndMatch = new RegExp('^フローチャートを終了$');
 const inputMatch = new RegExp('を入力$');
 const outputMatch = new RegExp('を出力$');
 const displayMatch = new RegExp('を表示$');
-const forMatch = new RegExp('回繰り返す$');
-const whileMatch = new RegExp('まで繰り返す$');
+//const forMatch = new RegExp('回繰り返す$');
+//const whileMatch = new RegExp('まで繰り返す$');
+const loopStartMatch = new RegExp('間繰り返す$');
 const loopEndMatch = new RegExp('^ループの終了地点$');
 const ifMatchLeft = new RegExp('^もし、');
 const ifMatchRight = new RegExp('ならば、$');
@@ -90,7 +91,7 @@ function getTypeOf(lineText){
   else if(lineText.match(forcedIfMatch)) return 1;
   else if(lineText.match(forcedElseMatch)) return 6;
   else if(lineText.match(forcedLoopStartMatch)) return 2;
-  else if(lineText.match(forcedLoopEndMatch)) console.error("not defined process forcedLoopEnd Match");
+  else if(lineText.match(forcedLoopEndMatch)) return 3;
   else if(lineText.match(forcedIOMatch)) return 4;
   
   
@@ -104,9 +105,12 @@ function getTypeOf(lineText){
     // display
     console.error("undefined about displayMatch");
     return -2;
-  }else if(lineText.match(forMatch) || lineText.match(whileMatch)){
+  }else if(lineText.match(loopStartMatch)){
     // loop
     return 2;
+  }else if(lineText.match(loopEndMatch)){
+    // loop end
+    return 3;
   }else if(lineText.match(ifMatchLeft) && lineText.match(ifMatchRight)){
     // if
     return 1;
@@ -176,18 +180,30 @@ function convertLineText(lineText,typeNum){
       else if(lineText.match(flowEndMatch)) return "終了";
       else return lineText.substr(7); // 「「端子」」(空白)を抜いたテキスト
       break;
+      
     case changeTypeNameToTypeNum("処理"):
       if(lineText.match(forcedProcessMatch)) return lineText.substr(7);
       else return lineText;
       break;
+      
     case changeTypeNameToTypeNum("判断"):
       if(lineText.match(forcedIfMatch)) return lineText.substr(7);
       else return lineText.substring(3,lineText.length-4);
       break;
+      
     case changeTypeNameToTypeNum("入力・出力"):
       if(lineText.match(forcedIOMatch)) return lineText.substr(12); // 「「ファイル入出力」」(空白)
       else return lineText;
       break;
+      
+    case changeTypeNameToTypeNum("ループ開始"):
+      if(lineText.match(forcedLoopStartMatch)) return lineText.substr(9); // 「「反復開始」」(空白)
+      else return lineText.substring(0,lineText.length-4); // ---間繰り返す
+    
+    case changeTypeNameToTypeNum("ループ終了"):
+      if(lineText.match(forcedLoopEndMatch)) return lineText.substr(9);
+      else return "";
+    
     default:
       console.error("テキストの変換が定義されていません");
       return;
@@ -258,18 +274,6 @@ function updateFlowData(data){
   console.log("indentations",indentations);
   console.log("lineTexts",lineTexts);
   
-  let maxIndentationLevel = 0;
-  indentations.forEach((level) => maxIndentationLevel = Math.max(level,maxIndentationLevel));
-  
-  // ifIdx[i] := 直前のindentがiのifのインデックス
-  let elseNextIdx = [];
-  elseNextIdx.length = maxIndentationLevel+1;
-  elseNextIdx.fill(-1);
-  
-  // インデントレベルiのelseのスコープに入っているならば isInElse[i] = true
-  let isInElse = [];
-  isInElse.length = maxIndentationLevel+1;
-  
   // else の数
   let elseNum = 0;
   
@@ -285,6 +289,45 @@ function updateFlowData(data){
     
     typeNums.push(typeNum);
   }
+  
+  // それぞれいくつ"loopの影響で"indentationをマイナスするか
+  let loopIndentationDiff = [];
+  loopIndentationDiff.length = typeNums.length;
+  loopIndentationDiff[0] = 0;
+  
+  {
+    let cnt = 0;
+    
+    for(let i=0; i<loopIndentationDiff.length; i++){
+      // ループ開始の時にDiffをインクリメント終了の時デクリメント
+      
+      if(typeNums[i] === changeTypeNameToTypeNum("ループ開始")){
+        loopIndentationDiff[i] = cnt;
+        cnt++;
+        continue;
+      }
+      else if(typeNums[i] === changeTypeNameToTypeNum("ループ終了")) cnt--;
+      
+      loopIndentationDiff[i] = cnt;
+    }
+  }
+  console.log("loopIndentationDiff",loopIndentationDiff);
+  
+  // 先にindentationsからloopIndentationDiffを引いておく
+  for(let i=0; i<indentations.length; i++) indentations[i] -= loopIndentationDiff[i];
+  
+  let maxIndentationLevel = 0;
+  indentations.forEach((level) => maxIndentationLevel = Math.max(level,maxIndentationLevel));
+  
+  // ifIdx[i] := 直前のindentがiのifのインデックス
+  let elseNextIdx = [];
+  elseNextIdx.length = maxIndentationLevel+1;
+  elseNextIdx.fill(-1);
+  
+  // インデントレベルiのelseのスコープに入っているならば isInElse[i] = true
+  let isInElse = [];
+  isInElse.length = maxIndentationLevel+1;
+  
   
   let idxAsInData = [];
   idxAsInData.length = typeNums.length;
@@ -329,7 +372,7 @@ function updateFlowData(data){
   
   console.log("haveElseArray",haveElse);
   
-  let ifIndentationAt =[];
+  let ifIndentationAt = [];
   
   // 要改善　else ifの場合に対応してない
   for(let i=0; i<typeNums.length; i++){
@@ -344,6 +387,7 @@ function updateFlowData(data){
   let eachMaxDeepness = [];
   eachMaxDeepness.length = maxIndentationLevel+1;
   eachMaxDeepness.fill(0);
+  
   
   for(let i=0; i<lineTexts.length; i++){
     // dataの形式
