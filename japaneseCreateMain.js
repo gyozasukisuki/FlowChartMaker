@@ -41,9 +41,9 @@ const forcedTerminalMatch = new RegExp('^「「端子」」');
 const forcedProcessMatch = new RegExp('^「「処理」」');
 const forcedIfMatch = new RegExp('^「「判断」」');
 const forcedElseMatch = new RegExp('^「「条件不一致」」');
-const forcedLoopStartMatch = new RegExp('^「「反復開始」」');
-const forcedLoopEndMatch = new RegExp('^「「反復終了」」');
-const forcedIOMatch = new RegExp('^「「ファイル入出力」」');
+const forcedLoopStartMatch = new RegExp('^「「ループ始端」」');
+const forcedLoopEndMatch = new RegExp('^「「ループ終端」」');
+const forcedIOMatch = new RegExp('^「「データ」」');
 
 let isCtrlPressing = false;
 let isAltPressing = false;
