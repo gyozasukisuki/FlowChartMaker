@@ -46,6 +46,7 @@ const forcedLoopEndMatch = new RegExp('^「「反復終了」」');
 const forcedIOMatch = new RegExp('^「「ファイル入出力」」');
 
 let isCtrlPressing = false;
+let isAltPressing = false;
 
 // 1.和文による生成
 
@@ -524,9 +525,15 @@ function updateFlowData(data){
 }
 
 document.addEventListener("keydown",(e) =>{
-  if(document.activeElement.className !== "editorLine") return;
-  
   if(e.key === "Control") isCtrlPressing = true;
+  if(e.key === "Alt") isAltPressing = true;
+  if(e.key === "Enter" && isCtrlPressing && isAltPressing){
+    updatePreview();
+    e.preventDefault();
+    return;
+  }
+  
+  if(document.activeElement.className !== "editorLine") return;
   
   if(e.key === "Enter"){
     e.preventDefault();
@@ -571,12 +578,15 @@ document.addEventListener("keydown",(e) =>{
     }
   }
   
-  //console.log(e.key,"is entered");
+  console.log(e.key,"is entered");
+  console.log("Ctrl",(isCtrlPressing ? "input":"not input"),"Alt",(isAltPressing ? "input":"not input"));
+  //console.log(e.keyCode)
 });
 
 document.addEventListener("keyup",(e) =>{
-  if(document.activeElement.className !== "editorLine") return;
+  if(e.key === "Alt") isAltPressing = false;
   if(e.key === "Control") isCtrlPressing = false;
+  if(document.activeElement.className !== "editorLine") return;
   //console.log(e.key,"is upped");
 });
 
