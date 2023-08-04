@@ -590,9 +590,9 @@ function updatePreview(){
   const maxDeepness = getMaxDeepnessIn(flow_data);
   const maxAlignX = getMaxAlignXIn(flow_data);
   console.log("maxAlignX",maxAlignX);
-  const sidePadding = 200;
+  const sidePadding = Math.round(padding*1.5);
   canvas.width = Math.max((maxAlignX+1)*rectW+sidePadding*(maxAlignX+1),sidePadding+rectW*2);
-  canvas.height = Math.max(rectH+120*(maxDeepness+1)+60,rectH+60);
+  canvas.height = Math.max(rectH+padding*(maxDeepness+1)+60,rectH+60);
   
   const dataAlignX = calcAlignX(flow_data);
   drawToCanvas(flow_data,dataAlignX);
