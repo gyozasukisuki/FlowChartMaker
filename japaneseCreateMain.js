@@ -234,6 +234,34 @@ function changeTypeNameToTypeNum(typeName){
   }
 }
 
+// それぞれのindex(not idxAsInData)の行がいくつのElse節に入っているかを持った配列を返す
+// Else自体も
+function getIsIdxInHowManyElseArray(typeNums,indentations){
+  let res = [];
+  res.length = typeNums.length;
+  res.fill(0);
+  
+  let elseIndents = [];
+  let nowNumber = 0;
+  
+  for(let i=0; i<typeNums.length; i++){
+    while(elseIndents.length > 0 && indentations[i] <= elseIndents.slice(-1)[0]){
+      elseIndents.pop();
+      nowNumber--;
+    }
+    
+    if(typeNums[i] === changeTypeNameToTypeNum("条件不一致")){
+      nowNumber++;
+      elseIndents.push(indentations[i]);
+      res[i] = nowNumber;
+      continue;
+    }
+    
+    res[i] = nowNumber; 
+  }
+  console.log("IsIdxInHowManyElseArray",res);
+}
+
 function updateFlowData(data){
   const htmlTexts = getInformationsOf("htmlText");
   let indentations = [];
@@ -273,7 +301,7 @@ function updateFlowData(data){
   
   console.log("indentations",indentations);
   console.log("lineTexts",lineTexts);
-  
+    
   // else の数
   let elseNum = 0;
   
@@ -289,6 +317,7 @@ function updateFlowData(data){
     
     typeNums.push(typeNum);
   }
+  
   
   // それぞれいくつ"loopの影響で"indentationをマイナスするか
   let loopIndentationDiff = [];
@@ -315,6 +344,8 @@ function updateFlowData(data){
   
   // 先にindentationsからloopIndentationDiffを引いておく
   for(let i=0; i<indentations.length; i++) indentations[i] -= loopIndentationDiff[i];
+  
+  const isIdxInHowManyElse = getIsIdxInHowManyElseArray(typeNums,indentations);
   
   let maxIndentationLevel = 0;
   indentations.forEach((level) => maxIndentationLevel = Math.max(level,maxIndentationLevel));
