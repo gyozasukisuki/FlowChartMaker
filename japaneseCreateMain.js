@@ -438,7 +438,6 @@ function updateFlowData(data){
   eachMaxDeepness.length = maxIndentationLevel+1;
   eachMaxDeepness.fill(0);
   
-  
   for(let i=0; i<lineTexts.length; i++){
     // dataの形式
     // sequence -> flow_data = [(data1),(data2), ...] (dataN) = [(int)Type,[(int)To1,(int)To2, ...],(String)text,(int)align-x,(int)deepness,(auto)Other];
@@ -588,6 +587,13 @@ setInterval("sentenceColoring()", 10000);
 
 function updatePreview(){
   updateFlowData(flow_data);
+  const maxDeepness = getMaxDeepnessIn(flow_data);
+  const maxAlignX = getMaxAlignXIn(flow_data);
+  console.log("maxAlignX",maxAlignX);
+  const sidePadding = 200;
+  canvas.width = Math.max((maxAlignX+1)*rectW+sidePadding*(maxAlignX+1),sidePadding+rectW*2);
+  canvas.height = Math.max(rectH+120*(maxDeepness+1)+60,rectH+60);
+  
   const dataAlignX = calcAlignX(flow_data);
   drawToCanvas(flow_data,dataAlignX);
   sentenceColoring();
@@ -654,8 +660,8 @@ const test4_flow = [
 const canvas = document.getElementById("previewCanvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 1000;
-canvas.height = 1000;
+canvas.width = 100;
+canvas.height = 100;
 
 const rectW = 172;
 const rectH = 86;
@@ -666,14 +672,27 @@ const padding = 120;
 //   canvas:document.getElementById("canvas")
 // }
 
+function getMaxAlignXIn(data){
+  let res = 0;
+  for(let i=0; i<data.length; i++){
+    res = Math.max(flow_data[i][3],res);
+  }
+  return res;
+}
+
+function getMaxDeepnessIn(data){
+  let res = 0;
+  for(let i=0; i<data.length; i++){
+    res = Math.max(data[i][4],res);
+  }
+  
+  return res;
+}
 
 // 横方向にどれくらい分割するか
 
 function calcAlignX(flow_data){
-  let max_align_level = -1;
-  for(let i=0; i<flow_data.length; i++){
-    if(max_align_level < flow_data[i][3]) max_align_level = flow_data[i][3];
-  }
+  const max_align_level = getMaxAlignXIn(flow_data);
 
   return canvas.width / (max_align_level+2);
 }
