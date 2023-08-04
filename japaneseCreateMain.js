@@ -260,6 +260,7 @@ function getIsIdxInHowManyElseArray(typeNums,indentations){
     res[i] = nowNumber; 
   }
   console.log("IsIdxInHowManyElseArray",res);
+  return res;
 }
 
 function updateFlowData(data){
@@ -297,7 +298,7 @@ function updateFlowData(data){
     }
   }
   
-  //ここらへんで多重ifの調整(alignX)も終わらせておいてほしい
+  
   
   console.log("indentations",indentations);
   console.log("lineTexts",lineTexts);
@@ -347,6 +348,47 @@ function updateFlowData(data){
   
   const isIdxInHowManyElse = getIsIdxInHowManyElseArray(typeNums,indentations);
   
+  // ifのindexes(indexはidxAsInDataのもの”ではない”)
+  let ifIdxes = [];
+  for(let i=0; i<typeNums.length; i++){
+    if(typeNums[i] === changeTypeNameToTypeNum("判断")) ifIdxes.push(i);
+  }
+  console.log("idxesOfIf",ifIdxes);
+  
+  // if以外は-1 ifでelse節を持っているものはそのインデックス そうでないなら-1 インデックスはidxAsInDataではない
+  // haveElse[i] := i番目の記号が判断でない -> -1, i番目の記号が判断かつElse節を持たない -> -1, どちらにも当てはまらない -> Else(条件不一致)のインデックス
+  let haveElse = [];
+  haveElse.length = typeNums.length;
+  haveElse.fill(-1);
+  ifIdxes.forEach((ifIdx) => {
+    for(let idx = ifIdx+1; idx<typeNums.length; idx++){
+      if(typeNums[idx] === changeTypeNameToTypeNum("条件不一致") && indentations[idx] === indentations[ifIdx]){
+        haveElse[ifIdx] = idx;
+        break;
+      }
+      if(indentations[idx] <= indentations[ifIdx]) break;
+    }
+  });
+  
+  console.log("haveElseArray",haveElse);
+  
+  // 多重Ifの処理をする
+  // Else内のIfが見つかったらそのIfが属しているElse節をもつIfのYesの方に入っている行のインデントを全てインクリメントする
+  for(let i=0; i<haveElse.length; i++){
+    if(haveElse[i] === -1) continue;
+    let haveIfInElseNum = 0;
+    for(let j=haveElse[i]+1; j<haveElse.length; j++){
+      if(indentations[i] >= indentations[j]) break;
+      if(typeNums[j] === changeTypeNameToTypeNum("判断")) haveIfInElseNum++;
+    }
+    if(!haveIfInElseNum) continue;
+    
+    // Else節にIfを持っているならIfのyes節の行のインデントをインクリメントする
+    for(let j=i+1; j<haveElse[i]; j++){
+      indentations[j] += haveIfInElseNum;
+    }
+  }
+  
   let maxIndentationLevel = 0;
   indentations.forEach((level) => maxIndentationLevel = Math.max(level,maxIndentationLevel));
   
@@ -380,29 +422,6 @@ function updateFlowData(data){
   
   //console.log(numberOfIdxAsInData);
   
-  // ifのindexes(indexはidxAsInDataのもの)
-  let ifIdxes = [];
-  for(let i=0; i<idxAsInData.length; i++){
-    if(typeNums[i] === changeTypeNameToTypeNum("判断")) ifIdxes.push(idxAsInData[i]);
-  }
-  console.log("idxesOfIf",ifIdxes);
-  
-  // if以外はfalse ifでelse節を持っているものはtrue そうでないならfalse　インデックスはidxAsInDataである
-  let haveElse = [];
-  haveElse.length = numberOfIdxAsInData;
-  haveElse.fill(false);
-  ifIdxes.forEach((ifIdx) => {
-    for(let idx = ifIdx+1; idx<typeNums.length; idx++){
-      if(typeNums[idx] === changeTypeNameToTypeNum("条件不一致") && indentations[idx] === indentations[ifIdx]){
-        haveElse[ifIdx] = true;
-        break;
-      }
-      if(indentations[idx] <= indentations[ifIdx]) break;
-    }
-  });
-  
-  console.log("haveElseArray",haveElse);
-  
   let ifIndentationAt = [];
   
   // 要改善　else ifの場合に対応してない
@@ -427,7 +446,7 @@ function updateFlowData(data){
     let typeNum = typeNums[i];
     if(typeNum === changeTypeNameToTypeNum("条件不一致")){
       isInElse[indentations[i]] = true;
-      data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i+1]);
+      if(!data[elseNextIdx[indentations[i]]][1].includes(idxAsInData[i+1]))　data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i+1]);
       continue;
     }
     
@@ -451,12 +470,12 @@ function updateFlowData(data){
     let to = [];
     let text = convertLineText(lineTexts[i],typeNum);
     
-    const alignX = indentations[i]-(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
+    const alignX = indentations[i]-isIdxInHowManyElse[i];
     let deepness = eachMaxDeepness[alignX];
     console.log("deepness",deepness);
     eachMaxDeepness[alignX]++;
     
-    if(typeNum === changeTypeNameToTypeNum("判断")) eachMaxDeepness[indentations[i]+1] = eachMaxDeepness[indentations[i]];
+    if(typeNum === changeTypeNameToTypeNum("判断")) eachMaxDeepness[indentations[i+1]-isIdxInHowManyElse[i+1]] = eachMaxDeepness[alignX];
     // ifそれぞれの if記号とyes節のインデントの差(diff)をもって上げたほうがいいかも↑にも使える(多重ifのときに活躍)
     
 //     if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
@@ -472,12 +491,12 @@ function updateFlowData(data){
       // align-Xが自分以下のものと結ぶ
       
       // typeNumにおいてif = 1
-      if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(i+1);
-      if(typeNum !== changeTypeNameToTypeNum("判断") || !(haveElse[idxAsInData[i]])){
+      if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(idxAsInData[i]+1);
+      if(typeNum !== changeTypeNameToTypeNum("判断") || (haveElse[i] < 0)){
         // 判断ではないか、判断ではあるがelse節をもっていないなら
         let nex = i+1;
         // else内なら、表示時に合わせるためにalignXを1引いてしまっているのでその分足してあげる
-        let x = alignX+(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] ? 1:0);
+        let x = indentations[i];
         // 自分より左(インデントレベルが低い)の「そうでないならば、」ではないものとつなぐ
         while(nex < lineTexts.length){
           if(typeNums[nex] === changeTypeNameToTypeNum("条件不一致")){
