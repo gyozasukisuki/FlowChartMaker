@@ -7,41 +7,119 @@
     <title>FlowChartMaker</title>
   
   <style>
-    .inlineCenter{
-      display:flex;
-      justify-content:center;
+    body,html {
+      margin: 0;
+      padding: 0;
     }
+    
     h1{
-      display:inline-block;
-      text-align:center;
-      font-size:50px;
-      border: 2px black solid;
-      color:black;
-      padding:10px;
+      font-size:4vw;
     }
+    
+    h2{
+      font-size:30px;
+      text-align:center;
+    }
+    .head-border {
+        display: flex;
+        align-items: center;
+    }
+
+    .head-border:before,
+    .head-border:after {
+        content: "";
+        height: 3px;
+        flex-grow: 1;
+        background-color: #666;
+    }
+
+    .head-border:before {
+        margin-right: 1rem;
+    }
+
+    .head-border:after {
+        margin-left: 1rem;
+    }
+    
+    
+    #top-title-div{
+      display:flex;
+      justify-content: space-around;
+      align-items:center;
+      
+      text-align:center;
+      border: 2px black solid;
+      color:white;
+      width:100vw;
+      height:500px;
+      margin:0;
+      top:0;
+      left:0;
+      right:0;
+      padding:10px;
+      background-color:black;
+    }
+    
+    
+    #promotion-img{
+      height:23vmax;
+    }
+    
+    #start-div{
+      margin-top:50px;
+      text-align:center;
+    }
+    
+    .border-button{
+      background:white;
+      color:black;
+      border: 3px black solid;
+      padding:10px;
+      -webkit-transition: all 0.3s;
+      transition: all 0.3s;
+    }
+    .border-button:hover{
+      background:black;
+      color:white;
+    }
+    
+    #start-div-buttons{
+      margin-top:50px;
+      display:flex;
+      justify-content: space-around;justify-content: space-around;
+    }
+    
   </style>
 </head>
 <body>
     <!--<canvas id="canvas"></canvas>-->
 
     <!--<script type="text/javascript" src="./script.js"></script>-->
-  <div class="inlineCenter">
-    <h1>
-    フローチャートメーカー
-    </h1>
+  <div id="top-title-div">
+    <div class="top-title-div-inner">
+      <h1>和文 to フローチャート</h1>
+      <p>
+        私達にとって身近な日本語の文章、<br>和文からフローチャートを生成することができます。
+      </p>
+    </div>
+    <div class="top-title-div-inner">
+      <img id="promotion-img" src="./images/flowchartEditorPreview.png"/>
+    </div>
+    
   </div>
   
-  <br>
-  
-  
-  <div style="display:block; margin:auto; text-align:center">
-      <a href="intuitive.html">「直感的な操作」はこちら</a>
-      <a href="japanese.html">「和文からの生成」はこちら</a>
-      <input value="操作方法・GitHubのリポジトリはこちら" type="button" onclick="window.open('https://github.com/gyozasukisuki/FlowChartMaker');"/>
+  <div id="start-div">
+    <h2 class="head-border">
+      ＜実際のアプリケーション＞
+    </h2>
+    <!--<a href="intuitive.html">「直感的な操作」はこちら</a>-->
+    <!--<a href="japanese.html">「和文からの生成」はこちら</a>-->
+    <div id="start-div-buttons">
+      <input class="border-button" style="font-size:25px;" type="button" value="「和文 to フローチャート」はこちら" onclick="location.href='japanese.html'"/>
+      <input class="border-button" style="font-size:25px;" value="操作方法・GitHubのリポジトリはこちら" type="button" onclick="window.open('https://github.com/gyozasukisuki/FlowChartMaker');"/>
+    </div>
+    
   </div>
-    
-    
-  
 
 </body>
 </html>
