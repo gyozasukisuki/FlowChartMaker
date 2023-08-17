@@ -10,12 +10,18 @@
 <body>
   <div id="header">
     <div id="titles">
-      <p id="editTitle">
-        編集
-      </p> 
-      <p id="previewTitle">
-        プレビュー
-      </p>
+      <div id="editTitle">
+        <span>
+          編集
+        </span>
+        <button class="settingButton" onclick="changeVisibilityOfEditSettingDisplay()" id="editSettingButton" title="エディタ設定画面を開きます"><img src="setting_icon.png"/></button>
+      </div>
+      <div id="previewTitle">
+        <span>
+          プレビュー
+        </span>
+        <button class="settingButton" onclick="changeVisibilityOfPreviewSettingDisplay()" id="previewSettingButton" title="プレビュー設定画面を開きます"><img src="setting_icon.png"/></button>
+      </div>
     </div>
   </div>
   
@@ -32,8 +38,60 @@
   
   <div id="previewBlock" style="margin-top:100px;">
     <canvas id="previewCanvas"></canvas>
-    <input id="updatePreviewButton" type="button" value="プレビュー更新" onclick="updatePreview()"/>
+    <input id="updatePreviewButton" type="button" value="プレビュー更新" onclick="updatePreview()" title="プレビューを更新します"/>
   </div>
+  
+  
+  <div class="hiddenSettingDisplay" id="previewSettingDisplay">
+    
+    <h1 style="text-align:center;" class="settingChar">
+      <span id="closeArrowPreviewSetting" onclick="changeVisibilityOfPreviewSettingDisplay()" title="プレビュー設定画面を閉じます">←</span>＜プレビュー設定＞
+    </h1>
+    <hr>
+    
+    <label class="settingChar" style="margin-right:10px;" for="previewRectWidthInput">記号の横幅(px)</label>
+    <input id="previewRectWidthInput" value="170" min="1" max="300" type="number" title="記号の横幅を指定します(デフォルト170px)"/>
+    
+    <label class="settingChar" style="margin-right:10px;" for="previewRectHeightInput">記号の高さ(px)</label>
+    <input id="previewRectHeightInput" value="85" min="1" max="300" type="number" title="記号の高さを指定します(デフォルト85px)"/>
+    
+    <div style="display:block; text-align:right;">
+      <input style="margin-right:20px;background-color:white;" type="button" value="適用" onclick="applyPreviewSettings()" title="入力された設定を適用します"/>
+    </div>
+    
+  </div>
+  <div class="hiddenSettingDisplay" id="editSettingDisplay">
+    <h1 style="text-align:center;" class="settingChar">
+      ＜エディタ設定＞<span id="closeArrowEditSetting" onclick="changeVisibilityOfEditSettingDisplay()" title="エディタ設定画面を閉じます">→</span>
+    </h1>
+    <hr>
+    
+    <label class="settingChar" style="margin-right:10px;" for="editorFontSizeInput">フォントのサイズ(px)</label>
+    <input id="editorFontSizeInput" value="20" min="1" max="50" type="number" title="エディターでのフォントのサイズを指定します(デフォルト20px)"/>
+    
+    <div style="display:block; text-align:right;">
+      <input style="margin-right:20px;background-color:white;" type="button" value="適用" onclick="applyEditSettings()" title="入力された設定を適用します"/>
+    </div>
+  </div>
+  
+  <div id="footer">
+    <div id="flowChartDownloadDiv" style="display:inline;vertical-align:middle;right:0;" title="フローチャートをpng形式でダウンロードします">
+      <label style="display:inline">フローチャートのダウンロード</label><img width="35px" height="35px" src="./images/download_icon.png"/>
+    </div>
+    
+  </div>
+  
+  <dialog id="flowChartDownloadDialog" style="z-index:12;">
+    <p>
+      フローチャートをpng形式でダウンロードします。
+    </p>
+    <p>
+      よろしいですか?
+    </p>
+    
+    <input type="button" value="キャンセル" onclick="document.getElementById('flowChartDownloadDialog').close('Cancel')"/>
+    <input type="button" value="ダウンロード" style="background-color:blue; color:white" onclick="document.getElementById('flowChartDownloadDialog').close('Download')"/>
+  </dialog>
   
   <script type="text/javascript" src="./japaneseCreateMain.js"></script>
   
