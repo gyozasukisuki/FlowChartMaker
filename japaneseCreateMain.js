@@ -48,12 +48,15 @@ const forcedIOMatch = new RegExp('^「「データ」」');
 let isCtrlPressing = false;
 let isAltPressing = false;
 
+let linesFontSize = 20;
+
 // 1.和文による生成
 
 function createNewLineElement(){
   let newLine = document.createElement("pre");
   newLine.className = "editorLine";
   newLine.contentEditable = true;
+  newLine.style.fontSize = String(linesFontSize)+"px";
   return newLine;
 }
 
@@ -673,8 +676,8 @@ const ctx = canvas.getContext("2d");
 canvas.width = 100;
 canvas.height = 100;
 
-const rectW = 172;
-const rectH = 86;
+let rectW = 170;
+let rectH = 85;
 const padding = 120;
 
 // canvasの情報
@@ -920,6 +923,7 @@ function drawToCanvas(flow_data, alignX){
 //縦方向のスクロールでは動かず、横方向のスクロールで動くように
 const divideLineElement = document.getElementById("divideLine");
 const titlesDiv = document.getElementById("titles");
+const EDITOR_FONTSIZE_MAX = 50;
 
 window.addEventListener('scroll', () => {
   divideLineElement.style.left = -window.pageXOffset + 'px';
@@ -929,3 +933,69 @@ window.addEventListener('scroll', () => {
 window.onbeforeunload = (e) => {
     e.returnValue = "本当にページを離れますか?";
 }
+
+function changeVisibilityOfEditSettingDisplay(){
+  let dis = document.getElementById("editSettingDisplay");
+  if(dis.className === "rightSlideIn"){
+    dis.className = "rightSlideOut";
+    return;
+  }
+  dis.className = "rightSlideIn";
+  
+}
+
+function changeVisibilityOfPreviewSettingDisplay(){
+  let dis = document.getElementById("previewSettingDisplay");
+  if(dis.className === "leftSlideIn"){
+    dis.className = "leftSlideOut";
+    return;
+  }
+  dis.className = "leftSlideIn";
+  
+}
+
+function applyEditSettings(){
+  const fontSizeInput = document.getElementById("editorFontSizeInput");
+  let fontSize = Number(fontSizeInput.value);
+  if(fontSize >= EDITOR_FONTSIZE_MAX){
+    fontSize = EDITOR_FONTSIZE_MAX;
+    fontSizeInput.value = EDITOR_FONTSIZE_MAX;
+  }else if(fontSize <= 0){
+    fontSize = 1;
+    fontSizeInput.value = 1;
+  }
+  
+  
+  const lines = document.getElementsByClassName("editorLine");
+  for(let i=0; i<lines.length; i++) lines[i].style.fontSize = String(fontSize) + "px";
+  linesFontSize = fontSize;
+}
+
+function applyPreviewSettings(){
+  const rectWidthInput = document.getElementById("previewRectWidthInput");
+  let rectWidth = Number(rectWidthInput.value);
+  const rectHeightInput = document.getElementById("previewRectHeightInput");
+  let rectHeight = Number(rectHeightInput.value);
+  
+  rectW = rectWidth;
+  rectH = rectHeight;
+  
+  updatePreview();
+}
+
+document.getElementById("flowChartDownloadDiv").addEventListener("click",() => {
+  updatePreview();
+  document.getElementById("flowChartDownloadDialog").showModal();
+});
+
+document.getElementById("flowChartDownloadDialog").addEventListener("close",(e) => {
+  const returnValue = document.getElementById("flowChartDownloadDialog").returnValue;
+  if(returnValue === "Cancel") return;
+  
+  // Download
+  const a = document.createElement("a");
+  a.href = canvas.toDataURL("image/png");
+  a.download = "flowChart.png";
+  a.click();
+  a.remove();
+});
