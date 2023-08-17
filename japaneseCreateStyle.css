@@ -2,6 +2,11 @@ body{
   background-color:white;
 }
 
+body,html {
+  margin: 0;
+  padding: 0;
+}
+
 #header{
   position: fixed;
   width:100%;
@@ -15,6 +20,18 @@ body{
   display: table;
 }
 
+#footer{
+  position: fixed;
+  width:100%;
+  height: 50px;
+  display:flex;
+  background-color: white;
+  border-top: 2px blue solid;
+  z-index:10;
+  bottom:0;
+  justify-content:flex-end;
+}
+
 #titles{
   position:fixed;
   width:100%;
@@ -22,20 +39,39 @@ body{
   top: 0;
   left:0;
   display: table;
+  font-family: serif;
 }
 
 #editTitle{
   color:white;
   text-align:center;
   font-size:30px;
-  
   display: table-cell;
   vertical-align:middle;
-  
+}
+
+.settingButton{
+  background-color:white;
+  border: 3px black solid;
+  vertical-align:middle;
+  margin-left:10px;
+  padding:1px;
+}
+.settingButton img{
+  width:30px;
+  height:30px;
+  text-align:center;
+  transition: all 0.3s;
+}
+
+
+.settingButton img:hover{
+  transform: rotate(45deg);
 }
 
 .editorLine{
   display:flex;
+  font-size:20px;
   margin-left:50px;
   width:auto;
   background-color:white;
@@ -71,6 +107,7 @@ body{
   z-index:10;
   background-color:white;
   border: 3px black solid;
+  cursor:pointer;
   
 }
 
@@ -78,8 +115,82 @@ body{
   border: 3px rgb(0,0,200) solid;
 }
 #updatePreviewButton:active{
-  border: 3px rgb(180,180,200) solid;
-  
+  border: 3px rgb(180,180,200) solid;  
+}
+
+#editSettingDisplay{
+  position:fixed;
+  visibility:hidden;
+  text-align:center;
+  width:50%;
+  height:100%;
+  background-color: rgba(0,0,0,0.95);
+  right:0;
+  z-index:11;
+}
+
+#editSettingDisplay.rightSlideIn{
+  visibility:visible;
+  animation: RightSlideIn 0.3s;
+}
+
+#editSettingDisplay.rightSlideOut{
+  visibility: visible;
+  animation: RightSlideOut 0.3s;
+  transform:translateX(100%);
+}
+
+#previewSettingDisplay{
+  position:fixed;
+  visibility:hidden;
+  text-align:center;
+  width:50%;
+  height:100%;
+  background-color: rgba(0,0,0,0.95);
+  left:0;
+  z-index:11;
+}
+
+#previewSettingDisplay.leftSlideIn{
+  visibility:visible;
+  animation: LeftSlideIn 0.3s;
+}
+
+#previewSettingDisplay.leftSlideOut{
+  visibility:visible;
+  animation: LeftSlideOut 0.3s;
+  transform: translateX(-100%);
+}
+
+#closeArrowPreviewSetting,#closeArrowEditSetting{
+  display:inline-block;
+  font-size:35px;
+  color:yellow;
+  margin-right:20px;
+  cursor: pointer;
+
+  transition: all 0.3s;
+}
+
+#closeArrowPreviewSetting:hover{
+  transform: translateX(-10px);
+}
+
+#closeArrowEditSetting:hover{
+  transform: translateX(10px);
+}
+
+.settingChar{
+  color:white;
+}
+
+#flowChartDownloadDiv, #flowChartDownloadDiv img,#flowChartDownloadDiv label{
+  cursor:pointer;
+  transition: all 0.5s;
+}
+
+#flowChartDownloadDiv:hover img{
+  transform:translateY(10px);
 }
 
 @media (min-width: 600px) {
@@ -127,5 +238,49 @@ body{
     
     z-index:1;
     border-right: 2px solid black;
+  }
+}
+
+@keyframes RightSlideIn{
+  0%{
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  100%{
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes RightSlideOut{
+  0%{
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100%{
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes LeftSlideIn{
+  0%{
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  100%{
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes LeftSlideOut{
+  0%{
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100%{
+    opacity: 0;
+    transform: translateX(-100%);
   }
 }
