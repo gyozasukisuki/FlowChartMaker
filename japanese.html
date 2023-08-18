@@ -26,7 +26,7 @@
   </div>
   
   
-  <div id="editBlock" style="margin-top:100px; overflow:auto">
+  <div id="editBlock" style="margin-top:100px; margin-bottom:80px; overflow:auto">
     <div>
       <pre class="editorLine" contenteditable="true"></pre>
     </div>
@@ -68,6 +68,7 @@
     
     <label class="settingChar" style="margin-right:10px;" for="editorFontSizeInput">フォントのサイズ(px)</label>
     <input id="editorFontSizeInput" value="20" min="1" max="50" type="number" title="エディターでのフォントのサイズを指定します(デフォルト20px)"/>
+    <span class="settingChar" style="font-size:20" id="fontPreview">あa</span>
     
     <div style="display:block; text-align:right;">
       <input style="margin-right:20px;background-color:white;" type="button" value="適用" onclick="applyEditSettings()" title="入力された設定を適用します"/>
@@ -75,11 +76,29 @@
   </div>
   
   <div id="footer">
+    <div id="textDataUploadDiv" style="display:inline;vertical-align:middle;right:0;" title="フローチャートを生成するテキストデータをtext形式でアップロードします">
+      <label for="textDataFileInput" style="display:inline">生成テキストのアップロード</label><input id="textDataFileInput" type="file" accept="text/plain"/><img width="35px" height="35px" src=./images/upload_icon.png"/>
+    </div>
+    <div id="textDataDownloadDiv" style="display:inline;vertical-align:middle;right:0;" title="フローチャートを生成するテキストデータをtext形式でダウンロードします">
+      <label style="display:inline">生成テキストのダウンロード</label><img width="35px" height="35px" src="./images/download_icon.png"/>
+    </div>
     <div id="flowChartDownloadDiv" style="display:inline;vertical-align:middle;right:0;" title="フローチャートをpng形式でダウンロードします">
       <label style="display:inline">フローチャートのダウンロード</label><img width="35px" height="35px" src="./images/download_icon.png"/>
     </div>
     
   </div>
+  
+  <dialog id="textDataDownloadDialog" style="z-index:12;">
+    <p>
+      フローチャートの生成テキストをtext形式でダウンロードします。
+    </p>
+    <p>
+      よろしいですか?
+    </p>
+    
+    <button class="dialog-n" onclick="document.getElementById('textDataDownloadDialog').close('Cancel')">キャンセル(<u>n</u>)</button>
+    <button class="dialog-y" style="background-color:blue; color:white" onclick="document.getElementById('textDataDownloadDialog').close('Download')">ダウンロード(<u>y</u>)</button>
+  </dialog>
   
   <dialog id="flowChartDownloadDialog" style="z-index:12;">
     <p>
@@ -89,10 +108,11 @@
       よろしいですか?
     </p>
     
-    <input type="button" value="キャンセル" onclick="document.getElementById('flowChartDownloadDialog').close('Cancel')"/>
-    <input type="button" value="ダウンロード" style="background-color:blue; color:white" onclick="document.getElementById('flowChartDownloadDialog').close('Download')"/>
+    <button class="dialog-n" onclick="document.getElementById('flowChartDownloadDialog').close('Cancel')">キャンセル(<u>n</u>)</button>
+    <button class="dialog-y" style="background-color:blue; color:white" onclick="document.getElementById('flowChartDownloadDialog').close('Download')">ダウンロード(<u>y</u>)</button>
   </dialog>
   
+  <script src="https://www.openjs.com/scripts/events/keyboard_shortcuts/shortcut.js"></script>
   <script type="text/javascript" src="./japaneseCreateMain.js"></script>
   
 </body>
