@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowChartMaker-explanation</title>
+  
+  <style>
+    html,body{
+      margin:0;
+      padding:0;
+    }
+    
+    #header{
+      position: fixed;
+      width:100%;
+      height:80px;
+      background-color: black;
+      top: 0;
+      left:0;
+      margin-bottom: 100px;
+      color:white;
+      text-align:center;
+    }
+    p{
+      margin-left:60px;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>
+      「日本語でフロー」 使用方法
+    </h1>
+  </div>
+  
+  <ol style="margin-left:50px;margin-top:100px;">
+    <li><a href="#controlTitle">操作画面の説明</a></li>
+    <li><a href="#sentenceTitle">文法</a></li>
+  </ol>
+  
+  <h1 id="controlTitle" style="margin-left:50px">
+    操作画面の説明
+  </h1>
+  
+  <img style="display:block;border:1px black solid;width:50vw;margin:auto;" src="https://cdn.glitch.global/3ad11da6-a3ae-4a37-ad6c-9971535c4319/display_explanation.png?v=1692356843208"/>
+  
+  <div style="display:flex;flex-wrap:wrap;">
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ①入力欄
+      </h2>
+      <p>
+        縦線のある部分の右側は1つの行です。<br>その左側をクリックするとその行への入力が可能になります。
+      </p>
+    </div>
+    
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ②プレビュー
+      </h2>
+      <p>
+        入力欄の内容をもとに生成されたフローチャートがここに表示されます。<br>
+        最終的にダウンロードするフローチャートは表示されたものがそのままダウンロードされると考えてください。
+      </p>
+    </div>
+    
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ③プレビュー更新ボタン
+      </h2>
+      <p>
+        このボタンをクリックすると、入力欄の内容をもとにしたフローチャートの生成が開始されます。
+      </p>
+    </div>
+      
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ④エディタ設定を開く
+      </h2>
+      <p>
+        このボタンをクリックすると、エディタ設定を変更できる画面が表示されます。
+      </p>
+    </div>
+    
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ⑤プレビュー設定を開く
+      </h2>
+      <p>
+        このボタンをクリックすると、プレビュー設定を変更できる画面が表示されます。
+      </p>
+    </div>
+    
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ⑥生成テキストアップロード
+      </h2>
+      <p>
+        ここで、保存したtext形式のファイルをアップロードし、復元することができます。
+      </p>
+    </div>
+    
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ⑦生成テキストダウンロード
+      </h2>
+      <p>
+        ここで、text形式の生成テキストをダウンロードできます。
+      </p>
+    </div>
+    
+    <div>
+      <h2 style="margin-top:100px;margin-left:50px;">
+        ⑧フローチャートダウンロード
+      </h2>
+      <p>
+        ここで、png形式のフローチャートの画像ファイルをダウンロードできます。
+      </p>
+    </div>
+  </div>
+  
+  <hr>
+  
+  <h1 id="sentenceTitle" style="margin-left:50px">
+    文法
+  </h1>
+  
+  <ol style="margin-left:60px;">
+    <li><a href="#processEx">処理</a></li>
+    <li><a href="#connectEx">端子</a></li>
+    <li><a href="#ifEx">判断</a></li>
+    <li><a href="#elseEx">条件不一致</a></li>
+    <li><a href="#loopStartEx">ループ始端</a></li>
+    <li><a href="#loopEndEx">ループ終端</a></li>
+    <li><a href="#dataEx">データ</a></li>
+  </ol>
+  
+  <p style="margin-left:60px">
+    以下の説明では、(空白)を半角スペースもしくは全角スペース、[内容]をフローチャート中の記号に表示したい内容そのものとします。
+    <br>
+    またダブルクォーテーション("")で囲われた部分はある行に入力されたものとします。
+    <br>
+    フローチャート生成時、空白のみの行については無視されます。
+    <br>
+    インデントは、インデントの深さを+1したい空白のみでない行にカーソルがあるとき、Tabキーを入力することで加えることができます。
+  </p>
+  
+  <div>
+    <div>
+      <h2 id="processEx" style="margin-left:60px;">
+        処理
+      </h2>
+      <p style="margin-left:70px;">
+        <b>特定のキーワードに当てはまらない場合、または"「「処理」」(空白)[内容]"の形で書かれた行</b>は処理としてフローチャート中に表示されます。
+      </p>
+    </div>
+    
+    <div>
+      <h2 id="connectEx" style="margin-left:60px;">
+        端子
+      </h2>
+      <p style="margin-left:70px;">
+        <b>"フローチャートを開始"、"フローチャートを終了"、または"「「端子」」(空白)[内容]"の形で書かれた行</b>は端子としてフローチャート中に表示されます。
+        <br>
+        記号中に表示されるのは、
+        <br>
+        <br>
+        <span style="margin-left:80px">"フローチャートを開始"　→　"開始"</span>
+        <br>
+        <span style="margin-left:80px">"フローチャートを終了"　→　"終了"</span>
+        <br>
+        <span style="margin-left:80px">"「「端子」」(空白)[内容]" →　[内容]</span>
+        <br>
+        <br>
+        となっています。
+      </p>
+    </div>
+    
+    <div>
+      <h2 id="ifEx" style="margin-left:60px;">
+        判断
+      </h2>
+      <p style="margin-left:70px;">
+        <b>"もし、[内容]ならば、"、または"「「判断」」(空白)[内容]"の形で書かれた行</b>は判断としてフローチャート中に表示されます。
+        <br>
+        判断の行の後には1つ以上の、空白でないインデントが(判断の行のインデント)+1の深さである行が存在する必要があります。
+      </p>
+    </div>
+    
+    <div>
+      <h2 id="elseEx" style="margin-left:60px;">
+        条件不一致
+      </h2>
+      <p style="margin-left:70px;">
+        <b>"そうでないならば、"、または"「「条件不一致」」(空白)[内容]"の形で書かれた行</b>は条件不一致を表す行と認識されます。
+        <br>
+        条件不一致は特殊で、フローチャートに表示はされません([内容]も表示されません)が、判断の行以降に判断の行と同じインデントの深さでこのタイプの行を書くことで
+        <br>
+        それ以降に条件に合わなかった場合の処理を書くことができるようになります。
+        <br>
+        この行の後には1つ以上の、空白でないインデントが(判断の行のインデント)+1の深さである行が存在する必要があります。
+      </p>
+    </div>
+    
+    <img style="display:block;border:1px black solid;width:50vw;margin:auto;" src="https://cdn.glitch.global/3ad11da6-a3ae-4a37-ad6c-9971535c4319/wabunFlowImage.png?v=1692355506505"/>
+    
+    <div>
+      <h2 id="loopStartEx" style="margin-left:60px;">
+        ループ始端
+      </h2>
+      <p style="margin-left:70px;">
+        <b>"[内容]間繰り返す"、または"「「ループ始端」」(空白)[内容]"の形で書かれた行</b>はループ始端(ループの始まり)を表す行と認識されます。
+        <br>
+        この行の後には1つ以上の、空白でないインデントが(判断の行のインデント)+1の深さである行が存在する必要があります。
+      </p>
+    </div>
+    
+    <div>
+      <h2 id="loopEndEx" style="margin-left:60px;">
+        ループ終端
+      </h2>
+      <p style="margin-left:70px;">
+        <b>"ループの終了地点"、または"「「ループ終端」」(空白)[内容]"の形で書かれた行</b>はループ終端(ループの終わり)を表す行と認識されます。
+        <br>
+        行が"ループの終了地点"の場合、ループ終端の記号には文字は何も表示されません。
+        <br>
+        この行はループ始端以降かつループ始端と同じインデントの深さの必要があります。
+      </p>
+    </div>
+    
+    <div>
+      <h2 id="dataEx" style="margin-left:60px;">
+        データ
+      </h2>
+      <p style="margin-left:70px;">
+        <b>[内容]が"を入力"、"を出力"で終わる形、または"「「データ」」(空白)[内容]"の形で書かれた行</b>はループ終端(ループの終わり)を表す行と認識されます。
+        <br>
+        この行はループ始端以降かつループ始端と同じインデントの深さの必要があります。
+      </p>
+    </div>
+    
+    <img style="display:block;border:1px black solid;width:50vw;margin:auto;" src="https://cdn.glitch.global/3ad11da6-a3ae-4a37-ad6c-9971535c4319/display_explanation_loop.png?v=1692360921888"/>
+    
+  </div>
+  
+</body>
+</html>
