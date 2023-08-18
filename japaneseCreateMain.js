@@ -3,7 +3,7 @@
 目次
 1.和文による生成
 2.プレビュー関連
-3.htmlの補正
+3.htmlの補正,ダウンロード関連
 
 検索をかけて移動すると便利
 */
@@ -196,16 +196,16 @@ function convertLineText(lineText,typeNum){
       break;
       
     case changeTypeNameToTypeNum("データ"):
-      if(lineText.match(forcedIOMatch)) return lineText.substr(12); // 「「ファイル入出力」」(空白)
+      if(lineText.match(forcedIOMatch)) return lineText.substr(8); // 「「データ」」(空白)
       else return lineText;
       break;
       
     case changeTypeNameToTypeNum("ループ始端"):
-      if(lineText.match(forcedLoopStartMatch)) return lineText.substr(9); // 「「反復開始」」(空白)
+      if(lineText.match(forcedLoopStartMatch)) return lineText.substr(10); // 「「ループ始点」」(空白)
       else return lineText.substring(0,lineText.length-4); // ---間繰り返す
     
     case changeTypeNameToTypeNum("ループ終端"):
-      if(lineText.match(forcedLoopEndMatch)) return lineText.substr(9);
+      if(lineText.match(forcedLoopEndMatch)) return lineText.substr(10);
       else return "";
     
     default:
@@ -527,30 +527,57 @@ function updateFlowData(data){
   console.log("updateFlowData");
 }
 
-document.addEventListener("keydown",(e) =>{
-  if(e.key === "Control") isCtrlPressing = true;
-  if(e.key === "Alt") isAltPressing = true;
-  if(e.key === "Enter" && isCtrlPressing && isAltPressing){
-    updatePreview();
-    e.preventDefault();
-    return;
-  }
-  
+shortcut.add("Ctrl+Alt+Enter",() => {
+  updatePreview();
+});
+
+shortcut.add("Enter",() => {
   if(document.activeElement.className !== "editorLine") return;
   
-  if(e.key === "Enter"){
-    e.preventDefault();
-    console.log("Enter is input!!");
-    
-    // ↓Enterキーが入力されたときにカーソルがのっていた要素
-    //console.log(document.activeElement);
-    const newLine = createNewLineElement();
-    
-    // Enter -> 下に Ctrl+Enter -> 上に
-    if(!isCtrlPressing) document.activeElement.after(newLine);
-    else document.activeElement.before(newLine);
-    newLine.focus();
+  // ↓Enterキーが入力されたときにカーソルがのっていた要素
+  //console.log(document.activeElement);
+  const newLine = createNewLineElement();
+
+  document.activeElement.after(newLine);
+  
+  newLine.focus();
+});
+
+shortcut.add("Ctrl+Enter",() => {
+  if(document.activeElement.className !== "editorLine") return;
+  
+  const newLine = createNewLineElement();
+
+  document.activeElement.before(newLine);
+  
+  newLine.focus();
+});
+
+shortcut.add("Ctrl+s", () => {
+  updatePreview();
+  document.getElementById("flowChartDownloadDialog").showModal();
+});
+
+shortcut.add("Ctrl+Shift+s", () => {
+  document.getElementById("textDataDownloadDialog").showModal();
+});
+
+shortcut.add("Alt+n", () => {
+  const elem = document.getElementsByClassName("dialog-n");
+  for(let i=0; i<elem.length; i++){
+    if(elem[i].parentNode.open) elem[i].click();
   }
+});
+
+shortcut.add("Alt+y", () => {
+  const elem = document.getElementsByClassName("dialog-y");
+  for(let i=0; i<elem.length; i++){
+    if(elem[i].parentNode.open) elem[i].click();
+  }
+});
+
+document.addEventListener("keydown",(e) =>{
+  if(document.activeElement.className !== "editorLine") return;
   if(e.key === "ArrowUp"){
     if(document.activeElement.previousElementSibling != null) document.activeElement.previousElementSibling.focus();
   }
@@ -580,17 +607,7 @@ document.addEventListener("keydown",(e) =>{
       nowObj.remove();
     }
   }
-  
-  console.log(e.key,"is entered");
-  console.log("Ctrl",(isCtrlPressing ? "input":"not input"),"Alt",(isAltPressing ? "input":"not input"));
   //console.log(e.keyCode)
-});
-
-document.addEventListener("keyup",(e) =>{
-  if(e.key === "Alt") isAltPressing = false;
-  if(e.key === "Control") isCtrlPressing = false;
-  if(document.activeElement.className !== "editorLine") return;
-  //console.log(e.key,"is upped");
 });
 
 // 文章のハイライト/10s
@@ -919,7 +936,7 @@ function drawToCanvas(flow_data, alignX){
 
 // drawToCanvas(data,a_x);
 
-// 3.htmlの補正
+// 3.htmlの補正,ダウンロード関連
 //縦方向のスクロールでは動かず、横方向のスクロールで動くように
 const divideLineElement = document.getElementById("divideLine");
 const titlesDiv = document.getElementById("titles");
@@ -983,6 +1000,18 @@ function applyPreviewSettings(){
   updatePreview();
 }
 
+function createTextData(){
+  let res = "";
+  
+  const htmlTexts = getInformationsOf("htmlText");
+  
+  for(let i=0; i<htmlTexts.length; i++){
+    res += htmlTexts[i]+"\n";
+  }
+  
+  return res;
+}
+
 document.getElementById("flowChartDownloadDiv").addEventListener("click",() => {
   updatePreview();
   document.getElementById("flowChartDownloadDialog").showModal();
@@ -998,4 +1027,50 @@ document.getElementById("flowChartDownloadDialog").addEventListener("close",(e) 
   a.download = "flowChart.png";
   a.click();
   a.remove();
+});
+
+document.getElementById("textDataDownloadDiv").addEventListener("click",() => {
+  updatePreview();
+  document.getElementById("textDataDownloadDialog").showModal();
+});
+
+document.getElementById("textDataDownloadDialog").addEventListener("close",(e) => {
+  const returnValue = document.getElementById("textDataDownloadDialog").returnValue;
+  if(returnValue === "Cancel") return;
+  
+  // Download
+  const textData = createTextData();
+  const blob = new Blob([textData], {type: 'text/plain', endings: 'native'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'flowChartData.text';
+  a.click();
+  a.remove();
+  
+});
+
+document.getElementById("editorFontSizeInput").addEventListener("change",(e)=>{
+  document.getElementById("fontPreview").style.fontSize = String(document.getElementById("editorFontSizeInput").value)+"px";
+});
+
+document.getElementById("textDataFileInput").addEventListener("change",(e)=>{
+  if(document.getElementById("textDataFileInput").files.length === 0) return;
+  
+  const file = document.getElementById("textDataFileInput").files[0];
+  let reader = new FileReader();
+  reader.onload = function(progressEvent){
+    let lines = document.getElementsByClassName("editorLine");
+    const fileLines = this.result.split(/\r\n|\n/);
+    while(lines.length < fileLines.length){
+      lines[0].after(createNewLineElement());
+    }
+    while(lines.length > fileLines.length){
+      lines[0].remove();
+    }
+    lines = document.getElementsByClassName("editorLine");
+    console.log(lines);
+    
+    for(let i=0; i<fileLines.length; i++) lines[i].innerHTML = fileLines[i];
+  };
+  reader.readAsText(file);
 });
