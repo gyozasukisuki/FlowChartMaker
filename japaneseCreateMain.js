@@ -463,6 +463,7 @@ function updateFlowData(data){
       // -yes節とno節で深い方のもの+1とする- → 自分より右のもの全ての中で一番深いやつ+1
       //console.log("max deepness",eachMaxDeepness[indentations[i]],eachMaxDeepness[indentations[i]+1]);
       
+      // 自分より右側の記号の深さの最大値
       let nowMaxDeepnessRight = -1;
       for(let indent=indentations[i]; indent<eachMaxDeepness.length; indent++) nowMaxDeepnessRight = Math.max(nowMaxDeepnessRight,eachMaxDeepness[indent]);
       
@@ -479,7 +480,7 @@ function updateFlowData(data){
     eachMaxDeepness[alignX]++;
     
     if(typeNum === changeTypeNameToTypeNum("判断")) eachMaxDeepness[indentations[i+1]-isIdxInHowManyElse[i+1]] = eachMaxDeepness[alignX];
-    // ifそれぞれの if記号とyes節のインデントの差(diff)をもって上げたほうがいいかも↑にも使える(多重ifのときに活躍)
+    
     
 //     if(ifIndentationAt[i] >= 0 && isInElse[ifIndentationAt[i]] && !data[elseNextIdx[ifIndentationAt[i]]][1].includes(idxAsInData[i])){
 //       //console.log("added" ,idxAsInData[i]);
@@ -502,7 +503,7 @@ function updateFlowData(data){
         let x = indentations[i];
         // 自分より左(インデントレベルが低い)の「そうでないならば、」ではないものとつなぐ
         while(nex < lineTexts.length){
-          if(typeNums[nex] === changeTypeNameToTypeNum("条件不一致")){
+          if(typeNums[nex] === changeTypeNameToTypeNum("条件不一致") && indentations[nex] < x){
             x = indentations[nex];
             nex++;
             continue; 
@@ -644,14 +645,6 @@ Type ->
     5 = Start and Goal
     6 = Else
     
-*/
-
-/*
-    memo: How to make image by canvas
-
-    Use canvas.toDataURl() !!
-    example -> https://www.pazru.net/html5/Canvas/150.html
-
 */
 
 // test data
