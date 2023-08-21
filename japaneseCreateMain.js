@@ -56,6 +56,7 @@ function createNewLineElement(){
   let newLine = document.createElement("pre");
   newLine.className = "editorLine";
   newLine.contentEditable = true;
+  newLine.style.textIndent = "0em";
   newLine.style.fontSize = String(linesFontSize)+"px";
   return newLine;
 }
@@ -269,6 +270,7 @@ function getIsIdxInHowManyElseArray(typeNums,indentations){
 
 function updateFlowData(data){
   const htmlTexts = getInformationsOf("htmlText");
+  const lineNodes = document.getElementsByClassName("editorLine");
   let indentations = [];
   
   // \tをすべて抜いた文字列(最後の\tも)
@@ -278,17 +280,11 @@ function updateFlowData(data){
   
   // indentationsとlineTextsのデータを入れる
   for(let i=0; i<htmlTexts.length; i++){
-    let tabOnly = true;
-    let indentLevel = 0;
-    for(let j=0; j<htmlTexts[i].length; j++){
-      if(htmlTexts[i][j] !== "\t" && htmlTexts[i][j] !== '\b' && htmlTexts[i][j] !== '&nbsp;'){
-        tabOnly = false;
-        lineTexts.push(htmlTexts[i].trim());
-        break;
-      }else indentLevel++;
-    }
+    let indentText = lineNodes[i].style.textIndent;
+    let indentLevel = Number(indentText.substr(0,indentText.length-2));
     
-    if(!tabOnly) indentations.push(indentLevel);
+    lineTexts.push(htmlTexts[i].trim());
+    if(!htmlTexts[i].trim == "") indentations.push(indentLevel);
   }
   
   // 空に
@@ -538,6 +534,19 @@ shortcut.add("Enter",() => {
   // ↓Enterキーが入力されたときにカーソルがのっていた要素
   //console.log(document.activeElement);
   const newLine = createNewLineElement();
+  newLine.style.textIndent = document.activeElement.style.textIndent;
+  
+  const offset = window.getSelection().focusOffset;
+  
+  const activeElementType = getTypeOf(document.activeElement.innerText.substr(0,offset).trim());
+  
+  if(activeElementType === changeTypeNameToTypeNum("判断") || activeElementType === changeTypeNameToTypeNum("条件不一致") || activeElementType === changeTypeNameToTypeNum("ループ始端")){
+    //キャレットより左の文字列のタイプが次の行を1つ字下げする必要のあるものなら
+    newLine.style.textIndent = String(Number(newLine.style.textIndent.substr(0,newLine.style.textIndent.length-2))+1)+"em";
+  }
+  
+  if(offset != document.activeElement.innerText.length) newLine.innerHTML = document.activeElement.innerHTML.substr(offset,document.activeElement.innerHTML.length-offset+1);
+  document.activeElement.innerHTML = document.activeElement.innerHTML.substr(0,offset);
 
   document.activeElement.after(newLine);
   
@@ -548,10 +557,25 @@ shortcut.add("Ctrl+Enter",() => {
   if(document.activeElement.className !== "editorLine") return;
   
   const newLine = createNewLineElement();
-
+  newLine.style.textIndent = document.activeElement.style.textIndent;
+  
+  const offset = window.getSelection().focusOffset;
+  
+  newLine.innerHTML = document.activeElement.innerHTML.substr(0,offset);
+  if(offset != 0) document.activeElement.innerHTML = document.activeElement.innerHTML.substr(offset,document.activeElement.innerHTML.length-offset+1);
+  
   document.activeElement.before(newLine);
   
   newLine.focus();
+  
+  // キャレットの調整
+  const selection = window.getSelection();
+  const range = document.createRange();
+
+  range.setStart(newLine.firstChild, newLine.innerText.length);
+  range.setEnd(newLine.firstChild, newLine.innerText.length);
+  selection.removeAllRanges();
+  selection.addRange(range);
 });
 
 shortcut.add("Ctrl+s", () => {
@@ -577,36 +601,131 @@ shortcut.add("Alt+y", () => {
   }
 });
 
+shortcut.add("Tab",() => {
+  const indentText = document.activeElement.style.textIndent;
+  document.activeElement.style.textIndent = String(Number(indentText.substr(0,indentText.length-2))+1)+"em";
+});
+
+shortcut.add("Shift+Enter",() => {});
+
+shortcut.add("Shift+Tab",() => {
+  const indentText = document.activeElement.style.textIndent;
+  document.activeElement.style.textIndent = String(Math.max(Number(indentText.substr(0,indentText.length-2))-1,0))+"em";
+});
+
 document.addEventListener("keydown",(e) =>{
   if(document.activeElement.className !== "editorLine") return;
   if(e.key === "ArrowUp"){
-    if(document.activeElement.previousElementSibling != null) document.activeElement.previousElementSibling.focus();
-  }
-  if(e.key === "ArrowDown"){
-    if(document.activeElement.nextElementSibling != null) document.activeElement.nextElementSibling.focus();
-  } 
-  if(e.key === "Tab"){
+    if(document.activeElement.previousElementSibling == null) return;
     e.preventDefault();
     
-    //&#009はタブ文字である
-    document.activeElement.innerHTML = "&#009"+document.activeElement.innerHTML;
+    const offset = window.getSelection().focusOffset;
+    const nowObj = document.activeElement;
+    const nextObj = nowObj.previousElementSibling;
     
+    if(nextObj.innerHTML != ''){
+      // キャレットの調整
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      if(offset <= nextObj.innerText.length){
+        range.setStart(nextObj.firstChild, offset);
+        range.setEnd(nextObj.firstChild, offset);
+      }else{
+        range.setStart(nextObj.firstChild, nextObj.innerText.length);
+        range.setEnd(nextObj.firstChild, nextObj.innerText.length);
+      }
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    
+    nextObj.focus();
   }
+  if(e.key === "ArrowDown"){
+    if(document.activeElement.nextElementSibling == null) return;
+    e.preventDefault();
+    
+    const offset = window.getSelection().focusOffset;
+    const nowObj = document.activeElement;
+    const nextObj = nowObj.nextElementSibling;
+    
+    if(nextObj.innerHTML != ''){
+      // キャレットの調整
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      if(offset <= nextObj.innerText.length){
+        range.setStart(nextObj.firstChild, offset);
+        range.setEnd(nextObj.firstChild, offset);
+      }else{
+        range.setStart(nextObj.firstChild, nextObj.innerText.length);
+        range.setEnd(nextObj.firstChild, nextObj.innerText.length);
+      }
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    
+    nextObj.focus();
+  } 
+
   if(e.key === "Delete"){
     let nowObj = document.activeElement;
-    if(nowObj.innerHTML === '' && nowObj.nextElementSibling != null){
-      e.preventDefault();
-      nowObj.nextElementSibling.focus();
-      nowObj.remove();
+    
+    if(window.getSelection().focusOffset !== nowObj.innerText.length) return;
+    
+    if(nowObj.nextElementSibling == null) return;
+    
+    e.preventDefault();
+    
+    const beforeOffset = nowObj.innerText.length;
+    
+    if(nowObj.nextElementSibling.innerHTML != ''){
+      nowObj.innerHTML += nowObj.nextElementSibling.innerHTML;
     }
+    
+    if(nowObj.nextElementSibling.innerHTML != ''){
+      // キャレットの調整
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      range.setStart(nowObj.firstChild, beforeOffset);
+      range.setEnd(nowObj.firstChild, beforeOffset);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    nowObj.nextElementSibling.remove();
+  
   }
   if(e.key === "Backspace"){
+    if(window.getSelection().focusOffset !== 0) return;
+    
     let nowObj = document.activeElement;
-    if(nowObj.innerHTML === '' && nowObj.previousElementSibling != null){
       e.preventDefault();
+    if(nowObj.style.textIndent != "0em"){
+      const indentText = nowObj.style.textIndent;
+      nowObj.style.textIndent = String(Number(indentText.substr(0,indentText.length-2))-1)+"em";
+      return;
+    }else{
+      if(nowObj.previousElementSibling == null) return;
+
+      const beforeOffset = nowObj.previousElementSibling.innerText.length;
+      nowObj.previousElementSibling.innerHTML += nowObj.innerHTML;
+
+      if(nowObj.previousElementSibling.innerHTML != ''){
+        // キャレットの調整
+        const selection = window.getSelection();
+        const range = document.createRange();
+
+        range.setStart(nowObj.previousElementSibling.firstChild, beforeOffset);
+        range.setEnd(nowObj.previousElementSibling.firstChild, beforeOffset);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
       nowObj.previousElementSibling.focus();
       nowObj.remove();
     }
+    
   }
   //console.log(e.keyCode)
 });
@@ -997,9 +1116,12 @@ function createTextData(){
   let res = "";
   
   const htmlTexts = getInformationsOf("htmlText");
+  const lineNodes = document.getElementsByClassName("editorLine");
   
   for(let i=0; i<htmlTexts.length; i++){
-    res += htmlTexts[i]+"\n";
+    const indentText = lineNodes[i].style.textIndent;
+    const indentLevel = Number(indentText.substr(0,indentText.length-2));
+    res += "\t".repeat(indentLevel)+htmlTexts[i]+"\n";
   }
   
   return res;
@@ -1063,7 +1185,15 @@ document.getElementById("textDataFileInput").addEventListener("change",(e)=>{
     lines = document.getElementsByClassName("editorLine");
     console.log(lines);
     
-    for(let i=0; i<fileLines.length; i++) lines[i].innerHTML = fileLines[i];
+    for(let i=0; i<fileLines.length; i++){
+      let indentNum = 0;
+      for(let j=0; j<fileLines[i].length; j++){
+        if(fileLines[i][j] === "\t") indentNum++;
+        else break;
+      }
+      lines[i].innerHTML = fileLines[i].trim();
+      lines[i].style.textIndent = String(indentNum)+"em";
+    }
   };
   reader.readAsText(file);
 });
