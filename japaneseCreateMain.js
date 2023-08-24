@@ -389,6 +389,8 @@ function updateFlowData(data){
     }
   }
   
+  console.log("shaped data of indentations",indentations);
+  
   let maxIndentationLevel = 0;
   indentations.forEach((level) => maxIndentationLevel = Math.max(level,maxIndentationLevel));
   
@@ -422,6 +424,27 @@ function updateFlowData(data){
   
   //console.log(numberOfIdxAsInData);
   
+  // ifの終了後、最初の記号のインデックス(idxAsInDataではない)の集合
+  let setOfEndIfIdxes = new Set();
+  
+  ifIdxes.forEach((ifIdx) => {
+    let maxIndentation = indentations[ifIdx]; // 許容できる最大のインデント
+    for(let i=ifIdx+1; i<lineTexts.length; i++){
+      if(maxIndentation >= indentations[i]){
+        if(typeNums[i] == changeTypeNameToTypeNum("条件不一致")){
+          // elseが来たらその行のインデント以下のところとつなぐ
+          maxIndentation = indentations[i];
+          continue;
+        }
+        setOfEndIfIdxes.add(i);
+        console.log(i,"is EndIfIdx of", ifIdx);
+        break;
+      }
+    }
+  });
+  
+  const mapOfMaxDeepnessOfConnectToEndIf = new Map();
+  
   let ifIndentationAt = [];
   
   // 要改善　else ifの場合に対応してない
@@ -449,29 +472,34 @@ function updateFlowData(data){
       continue;
     }
     
-    if((ifIndentationAt[i] === -1 || ifIndentationAt[i] === indentations[i])&& typeNum != changeTypeNameToTypeNum("条件不一致")){
+    const alignX = indentations[i]-isIdxInHowManyElse[i];
+    
+    if(setOfEndIfIdxes.has(i)){
       // console.log("elseNextIdx",elseNextIdx[indentations[i]]);
       // if(!data[elseNextIdx[indentations[i]]][1].includes(idxAsInData[i])) data[elseNextIdx[indentations[i]]][1].push(idxAsInData[i]);
       //console.log("not else from",idxAsInData[i]);
       elseNextIdx[indentations[i]] = -1;
       isInElse[indentations[i]] = false;
       
+      console.log(`${i}はif後最初の記号です`);
       // -yes節とno節で深い方のもの+1とする- → 自分より右のもの全ての中で一番深いやつ+1
-      //console.log("max deepness",eachMaxDeepness[indentations[i]],eachMaxDeepness[indentations[i]+1]);
+      //console.log("max deepness",eachMaxDeepness[alignX],eachMaxDeepness[indentations[i]+1]);
       
       // 自分より右側の記号の深さの最大値
-      let nowMaxDeepnessRight = -1;
-      for(let indent=indentations[i]; indent<eachMaxDeepness.length; indent++) nowMaxDeepnessRight = Math.max(nowMaxDeepnessRight,eachMaxDeepness[indent]);
+      // let nowMaxDeepnessRight = -1;
+      // for(let indent=alignX; indent<eachMaxDeepness.length; indent++) nowMaxDeepnessRight = Math.max(nowMaxDeepnessRight,eachMaxDeepness[indent]);
       
-      eachMaxDeepness[indentations[i]] = nowMaxDeepnessRight;
+      // eachMaxDeepness[alignX] = nowMaxDeepnessRight;
+      eachMaxDeepness[alignX] = mapOfMaxDeepnessOfConnectToEndIf.get(i)+1;
     }
-    if(typeNum === 1) elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
+    if(typeNum === changeTypeNameToTypeNum("判断")) elseNextIdx[ifIndentationAt[i]] = idxAsInData[i];
     
-    let to = [];
+    let to = []; // idx as in dataを使ったto
+    let toNaturalIdx = []; // lineTexts内のインデックス(natural idx)を使ったto
     let text = convertLineText(lineTexts[i],typeNum);
     
-    const alignX = indentations[i]-isIdxInHowManyElse[i];
-    let deepness = eachMaxDeepness[alignX];
+    
+    const deepness = eachMaxDeepness[alignX];
     console.log("deepness",deepness);
     eachMaxDeepness[alignX]++;
     
@@ -486,12 +514,12 @@ function updateFlowData(data){
 //     }
     
     // toの更新
-    if(i === lineTexts.length-1) to.push(-1);
+    if(i === lineTexts.length-1) to.push(-1),toNaturalIdx.push(-1);
     else{
       // align-Xが自分以下のものと結ぶ
       
       // typeNumにおいてif = 1
-      if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(idxAsInData[i]+1);
+      if(typeNum ===changeTypeNameToTypeNum("判断")) to.push(idxAsInData[i]+1),toNaturalIdx.push(i+1);
       if(typeNum !== changeTypeNameToTypeNum("判断") || (haveElse[i] < 0)){
         // 判断ではないか、判断ではあるがelse節をもっていないなら
         let nex = i+1;
@@ -510,12 +538,21 @@ function updateFlowData(data){
 
         if(nex >= lineTexts.length){
           console.error("自分より左の記号と結ぶときに最後まで該当するものが見つかりませんでした。");
-          to.push(-1);
+          to.push(-1),toNaturalIdx.push(-1);
         }
-        else to.push(idxAsInData[nex]);
+        else to.push(idxAsInData[nex]),toNaturalIdx.push(nex);
       }
       
     }
+    
+    toNaturalIdx.forEach((toIdx) => {
+      if(setOfEndIfIdxes.has(toIdx)){
+        // if後最初の記号のいずれかにつながっている場合
+        
+        // deepnessの調整 (deepnessをつながっているものの中で最大のもの+1にするため)
+        mapOfMaxDeepnessOfConnectToEndIf.set(toIdx,(mapOfMaxDeepnessOfConnectToEndIf.has(toIdx) ? Math.max(deepness,mapOfMaxDeepnessOfConnectToEndIf.get(toIdx)) : deepness));
+      }
+    });
     
     data.push([typeNum,to,text,alignX,deepness]);  
   }
@@ -666,7 +703,7 @@ document.addEventListener("keydown",(e) =>{
     }
     
     nextObj.focus();
-  } 
+  }
 
   if(e.key === "Delete"){
     let nowObj = document.activeElement;
