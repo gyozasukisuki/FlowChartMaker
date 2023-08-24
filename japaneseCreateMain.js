@@ -836,6 +836,26 @@ const test4_flow = [
   [5,[-1],"ForEnd",0,2],
 ];
 
+// [テキスト、インデント]
+const sampleTextData = [
+  ["フローチャートを開始", 0],
+  ["もし、今は昼であるならば、", 0],
+  ["もし、天気が晴れならば、", 1],
+  ["晴れを出力", 2],
+  ["宿題をする", 1],
+  ["遊ぶ", 1],
+  ["そうでないならば、", 0],
+  ["もし、明日は休日ならば、", 1],
+  ["アラームを9時に設定", 2],
+  ["そうでないならば、", 1],
+  ["アラームを6時に設定", 2],
+  ["夜である間繰り返す", 1],
+  ["レム睡眠", 2],
+  ["ノンレム睡眠", 2],
+  ["ループの終了地点", 1],
+  ["フローチャートを終了", 0]
+];
+
 const canvas = document.getElementById("previewCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -1162,6 +1182,25 @@ function createTextData(){
   }
   
   return res;
+}
+
+function openSample(){
+  let lines = document.getElementsByClassName("editorLine");
+  
+  while(lines.length < sampleTextData.length){
+    lines[0].after(createNewLineElement());
+  }
+  while(lines.length > sampleTextData.length){
+    lines[0].remove();
+  }
+  lines = document.getElementsByClassName("editorLine");
+  console.log(lines);
+
+  for(let i=0; i<sampleTextData.length; i++){
+    let indentNum = 0;
+    lines[i].innerHTML = sampleTextData[i][0];
+    lines[i].style.textIndent = String(sampleTextData[i][1])+"em";
+  }
 }
 
 document.getElementById("flowChartDownloadDiv").addEventListener("click",() => {
