@@ -28,7 +28,7 @@
   
   <div id="editBlock" style="margin-top:100px; margin-bottom:80px; overflow:auto">
     <div>
-      <pre class="editorLine" contenteditable="true"></pre>
+      <pre class="editorLine" style="text-indent:0em;" contenteditable="true"></pre>
     </div>
   </div>
   
@@ -76,6 +76,9 @@
   </div>
   
   <div id="footer">
+    <div style="display:inline; vertical-align:middle">
+      <input type="button" style="display:block;margin-top:25px;height:30px;" value="サンプルファイルを開く" onclick="openSample()" />
+    </div>
     <div id="textDataUploadDiv" style="display:inline;vertical-align:middle;right:0;" title="フローチャートを生成するテキストデータをtext形式でアップロードします">
       <label for="textDataFileInput" style="display:inline">生成テキストのアップロード</label><input id="textDataFileInput" type="file" accept="text/plain"/><img width="35px" height="35px" src="./images/upload_icon.png"/>
     </div>
