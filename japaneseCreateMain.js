@@ -61,6 +61,34 @@ function createNewLineElement(){
   return newLine;
 }
 
+function createNewIndexElement(){
+  const lines = document.getElementsByClassName("editorLine");
+  console.log(lines[0].style.fontSize);
+  let newIndexElem = document.createElement("div");
+  
+  newIndexElem.className = "indexes";
+  newIndexElem.style.fontSize = String(linesFontSize) + "px";
+  newIndexElem.style.height = String(linesFontSize) + "px";
+  newIndexElem.style.marginTop = String((lines[0].offsetHeight-linesFontSize)/2) + "px";
+  newIndexElem.style.marginBottom = String((lines[0].offsetHeight-linesFontSize)) + "px";
+  
+  return newIndexElem;
+}
+
+function fixIndexes(){
+  const lines = document.getElementsByClassName("editorLine");
+  let indexes = document.getElementsByClassName("indexes");
+  
+  while(lines.length < indexes.length) indexes[0].remove();
+  while(lines.length > indexes.length) indexes[0].after(createNewIndexElement());
+  
+  indexes = document.getElementsByClassName("indexes");
+  
+  for(let i=1; i<=indexes.length; i++) indexes[i-1].textContent = String(i),indexes[i-1].style.fontSize = lines[0].style.fontSize;
+  
+  console.log(indexes);
+}
+
 function getInformationsOf(className){
   if(!classNames.includes(className)){
     console.error(String(className)+"というclassNameは存在しません");
@@ -561,6 +589,8 @@ function updateFlowData(data){
   console.log("updateFlowData");
 }
 
+// shortcut.jsを用いたショートカットキーたち
+
 shortcut.add("Ctrl+Alt+Enter",() => {
   updatePreview();
 });
@@ -638,7 +668,29 @@ shortcut.add("Alt+y", () => {
   }
 });
 
+shortcut.add("Ctrl+v",()=>{
+  if(document.activeElement.className !== "editorLine") return;
+  const offset = window.getSelection().focusOffset;
+  navigator.clipboard.readText().then((e) => {
+    e.replace(/\r?\n/g, '');
+    let preText = document.activeElement.innerText.substring(0,offset);
+    let nextText = document.activeElement.innerText.substring(offset);
+    document.activeElement.innerText = preText+e+nextText;
+    
+    
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.setStart(document.activeElement.firstChild, offset+e.length);
+    range.setEnd(document.activeElement.firstChild, offset+e.length);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }, () => {
+    return;
+  });
+});
+
 shortcut.add("Tab",() => {
+  if(document.activeElement.className !== "editorLine") return;
   const indentText = document.activeElement.style.textIndent;
   document.activeElement.style.textIndent = String(Number(indentText.substr(0,indentText.length-2))+1)+"em";
 });
@@ -646,6 +698,7 @@ shortcut.add("Tab",() => {
 shortcut.add("Shift+Enter",() => {});
 
 shortcut.add("Shift+Tab",() => {
+  if(document.activeElement.className !== "editorLine") return;
   const indentText = document.activeElement.style.textIndent;
   document.activeElement.style.textIndent = String(Math.max(Number(indentText.substr(0,indentText.length-2))-1,0))+"em";
 });
@@ -706,6 +759,8 @@ document.addEventListener("keydown",(e) =>{
   }
 
   if(e.key === "Delete"){
+    if(!window.getSelection().isCollapsed) return;
+    
     let nowObj = document.activeElement;
     
     if(window.getSelection().focusOffset !== nowObj.innerText.length) return;
@@ -732,10 +787,10 @@ document.addEventListener("keydown",(e) =>{
     }
 
     nowObj.nextElementSibling.remove();
-  
   }
   if(e.key === "Backspace"){
     if(window.getSelection().focusOffset !== 0) return;
+    if(!window.getSelection().isCollapsed) return;
     
     let nowObj = document.activeElement;
       e.preventDefault();
@@ -743,29 +798,42 @@ document.addEventListener("keydown",(e) =>{
       const indentText = nowObj.style.textIndent;
       nowObj.style.textIndent = String(Number(indentText.substr(0,indentText.length-2))-1)+"em";
       return;
-    }else{
-      if(nowObj.previousElementSibling == null) return;
-
-      const beforeOffset = nowObj.previousElementSibling.innerText.length;
-      nowObj.previousElementSibling.innerHTML += nowObj.innerHTML;
-
-      if(nowObj.previousElementSibling.innerHTML != ''){
-        // キャレットの調整
-        const selection = window.getSelection();
-        const range = document.createRange();
-
-        range.setStart(nowObj.previousElementSibling.firstChild, beforeOffset);
-        range.setEnd(nowObj.previousElementSibling.firstChild, beforeOffset);
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-      nowObj.previousElementSibling.focus();
-      nowObj.remove();
     }
-    
+    if(nowObj.previousElementSibling == null) return;
+
+    const beforeOffset = nowObj.previousElementSibling.innerText.length;
+    nowObj.previousElementSibling.innerHTML += nowObj.innerHTML;
+
+    if(nowObj.previousElementSibling.innerHTML != ''){
+      // キャレットの調整
+      const selection = window.getSelection();
+      const range = document.createRange();
+
+      range.setStart(nowObj.previousElementSibling.firstChild, beforeOffset);
+      range.setEnd(nowObj.previousElementSibling.firstChild, beforeOffset);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    nowObj.previousElementSibling.focus();
+    nowObj.remove();
   }
   //console.log(e.keyCode)
 });
+
+// linesDivに変化があった時indexを整える
+var linesDivObserver = new MutationObserver(function(){
+  //console.log('linesDivが変化しました');
+  fixIndexes();
+}); 
+
+const linesDiv = document.getElementById('linesDiv');
+ 
+const linesDivObserveConfig = { 
+  childList: true, 
+  characterData: true 
+};
+
+linesDivObserver.observe(linesDiv, linesDivObserveConfig);
 
 // 文章のハイライト/10s
 setInterval("sentenceColoring()", 10000);
@@ -1155,6 +1223,15 @@ function applyEditSettings(){
   const lines = document.getElementsByClassName("editorLine");
   for(let i=0; i<lines.length; i++) lines[i].style.fontSize = String(fontSize) + "px";
   linesFontSize = fontSize;
+  
+  const indexes = document.getElementsByClassName("indexes");
+  for(let i=0; i<indexes.length; i++){
+    indexes[i].style.fontSize = String(fontSize) + "px";
+    indexes[i].style.height = String(fontSize) + "px";
+    indexes[i].style.marginTop = String((lines[0].offsetHeight-fontSize)/2) + "px";
+    indexes[i].style.marginBottom = String((lines[0].offsetHeight-fontSize)) + "px";
+  }
+  
 }
 
 function applyPreviewSettings(){
