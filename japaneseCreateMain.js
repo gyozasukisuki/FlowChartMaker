@@ -28,7 +28,7 @@ const flowStartMatch = new RegExp('^フローチャートを開始$');
 const flowEndMatch = new RegExp('^フローチャートを終了$');
 const inputMatch = new RegExp('を入力$');
 const outputMatch = new RegExp('を出力$');
-const displayMatch = new RegExp('を表示$');
+// const displayMatch = new RegExp('を表示$');
 //const forMatch = new RegExp('回繰り返す$');
 //const whileMatch = new RegExp('まで繰り返す$');
 const loopStartMatch = new RegExp('間繰り返す$');
@@ -134,11 +134,13 @@ function getTypeOf(lineText){
   }else if(lineText.match(inputMatch) || lineText.match(outputMatch)){
     // input and output
     return 4;
-  }else if(lineText.match(displayMatch)){
-    // display
-    console.error("undefined about displayMatch");
-    return -2;
-  }else if(lineText.match(loopStartMatch)){
+  }
+  // else if(lineText.match(displayMatch)){
+  //   // display
+  //   console.error("undefined about displayMatch");
+  //   return -2;
+  // }
+  else if(lineText.match(loopStartMatch)){
     // loop
     return 2;
   }else if(lineText.match(loopEndMatch)){
@@ -190,6 +192,7 @@ function getLineTextsBy(htmlTexts){
       lineTexts.splice(i,1);
     }
   }
+  return lineTexts;
 }
 
 // その行が、どのインデントのifに属しているか(ifに属していない場合は-1、ifに関してはそれ自身のインデントを入れる)
@@ -312,7 +315,7 @@ function updateFlowData(data){
     let indentLevel = Number(indentText.substr(0,indentText.length-2));
     
     lineTexts.push(htmlTexts[i].trim());
-    if(!htmlTexts[i].trim == "") indentations.push(indentLevel);
+    if(!htmlTexts[i].trim() == "") indentations.push(indentLevel);
   }
   
   // 空に
@@ -589,6 +592,137 @@ function updateFlowData(data){
   console.log("updateFlowData");
 }
 
+function getArrayOfSyntaxError(){
+  const htmlTexts = getInformationsOf("htmlText");
+  const lineTexts = getLineTextsBy(htmlTexts);
+  
+  let lineIdx = []; // 1-indexedの何行目かの情報
+  let indentations = [];
+  const lineNodes = document.getElementsByClassName("editorLine");
+  let typeNums = [];
+  
+  // init typeNums
+  for(let i=0; i<lineTexts.length; i++){
+    let typeNum = getTypeOf(lineTexts[i]);
+    typeNums.push(typeNum);
+  }
+  
+  // init indentations and lineIdx
+  for(let i=0; i<htmlTexts.length; i++){
+    let indentText = lineNodes[i].style.textIndent;
+    let indentLevel = Number(indentText.substr(0,indentText.length-2));
+    
+    if(!htmlTexts[i].trim() == ""){
+      indentations.push(indentLevel);
+      lineIdx.push(i+1);
+    }
+  }
+  
+  if(lineTexts.length != indentations.length) console.error("lineTextsとindentationsの長さが異なります(getArrayOfSyntaxError内)");
+  
+  let res = [];
+  
+  const addIndentTypeNums = [changeTypeNameToTypeNum("判断"),changeTypeNameToTypeNum("条件不一致"),changeTypeNameToTypeNum("ループ始端")];
+  
+  for(let i=0; i<lineTexts.length; i++){
+    // コメントはどんなときがエラーか
+    
+    // 全てのタイプの行に対して共通
+    // 自身の行も1つ前の行もどちらも[判断、条件不一致、ループ始端、ループ終端]に含まれないのに自身の行と1つ前の行のインデントが一致しない場合
+    
+    if(i !== lineTexts.length-1 && !addIndentTypeNums.includes(typeNums[i]) && indentations[i] < indentations[i+1]) res.push(`${lineIdx[i]}行目:この行または次の行のインデントが不正です。`);
+    if(i !== lineTexts.length-1 && indentations[i] > indentations[i+1]){
+      if(typeNums[i+1] !== changeTypeNameToTypeNum("条件不一致") && typeNums[i+1] !== changeTypeNameToTypeNum("ループ終端")){
+        let beforeAddIndentType = false;
+        for(let j=i-1; j>=0; j--){
+          if(!addIndentTypeNums.includes(typeNums[j]) && indentations[j] === indentations[i+1]) break;
+
+          if(addIndentTypeNums.includes(typeNums[j]) && indentations[j] === indentations[i+1]){
+            beforeAddIndentType = true;
+            break;
+          }
+        }
+      } 
+    }
+    
+    switch(typeNums[i]){
+      case changeTypeNameToTypeNum("判断"):
+        if(i === lineTexts.length-1) break;
+        //　判断の行の次の行のインデントが判断の行のインデント+1になっていない場合
+        if(indentations[i] +1 !== indentations[i+1]) res.push(`${lineIdx[i]}行目:判断の行の次の行のインデントが、${lineIdx[i]}行目のインデント+1になっていません。`);
+        break;
+        
+      case changeTypeNameToTypeNum("条件不一致"):
+        // 条件不一致の行の次の行のインデントが条件不一致の行のインデント+1になっていない場合
+        // 条件不一致の行の前に条件不一致の行のインデントと同じ判断の記号がない場合
+        
+        let beforeIf = false;
+        for(let j=i-1; j>=0; j--){
+          // 自分と同じインデントの行が判断の行より先に見つかった ⇔ 対応する判断の行が存在しない
+          if(typeNums[j] !== changeTypeNameToTypeNum("判断") && indentations[j] === indentations[i]) break;
+          
+          if(typeNums[j] === changeTypeNameToTypeNum("判断") && indentations[j] === indentations[i]){
+            beforeIf = true;
+            break;
+          }
+        }
+        if(!beforeIf) res.push(`${lineIdx[i]}行目:条件不一致の行に対応する判断の行が見つかりませんでした。もしくは対応する判断の行の後に${lineIdx[i]}行目とインデントが同じ行がありました。`);
+        
+        if(i === lineTexts.length-1) break;
+        
+        if(indentations[i] +1 !== indentations[i+1]) res.push(`${lineIdx[i]}行目:条件不一致の行の次の行のインデントが、${lineIdx[i]}行目のインデント+1になっていません。`);
+        
+        break;
+        
+      case changeTypeNameToTypeNum("ループ始端"):
+        // 始端の次の行のインデントが始端の行のインデント+1になっていない場合
+        // 始端と同じインデントの終端がない場合
+        
+        let afterLoopEnd = false;
+        for(let j=i+1; j<lineTexts.length; j++){
+          if(typeNums[j] !== changeTypeNameToTypeNum("ループ終端") && indentations[j] === indentations[i]) break;
+          
+          if(typeNums[j] === changeTypeNameToTypeNum("ループ終端") && indentations[j] === indentations[i]){
+            afterLoopEnd = true;
+            break;
+          }
+        }
+        if(!afterLoopEnd) res.push(`${lineIdx[i]}行目:ループ始端の行に対応するループ終端の行が見つかりませんでした。もしくは対応するループ終端の行の前に${lineIdx[i]}行目とインデントが同じ行がありました。`);
+        
+        if(i === lineTexts.length-1) break;
+        
+        if(indentations[i] +1 !== indentations[i+1]) res.push(`${lineIdx[i]}行目:ループ始端の行の次の行のインデントが、${lineIdx[i]}行目のインデント+1になっていません。`);
+        
+        break;
+        
+      case changeTypeNameToTypeNum("ループ終端"):
+        // 終端と同じインデントの始端がない場合
+        // 終端の前の行のインデントが終端の行のインデント-1になっていない場合
+        
+        let beforeLoopStart = false;
+        
+        for(let j=i-1; i>=0; i--){
+          if(typeNums[j] !== changeTypeNameToTypeNum("ループ始端") && indentations[j] === indentations[i]) break;
+          
+          if(typeNums[j] === changeTypeNameToTypeNum("ループ始端") && indentations[j] === indentations[i]){
+            beforeLoopStart = true;
+            break;
+          }
+        }
+        
+        if(!beforeLoopStart) res.push(`${lineIdx[i]}行目:ループ終端の行に対応するループ始端の行が見つかりませんでした。もしくは対応するループ始端の行の後に${lineIdx[i]}行目とインデントが同じ行がありました。`);
+        
+        if(i === 0) break;
+        if(indentations[i] -1 !== indentations[i-1]) res.push(`${lineIdx[i]}行目:ループ終端の行の次の行のインデントが、${lineIdx[i]}行目のインデント-1になっていません。`);
+        
+        break;
+    }
+    
+  }
+  
+  return res;
+}
+
 // shortcut.jsを用いたショートカットキーたち
 
 shortcut.add("Ctrl+Alt+Enter",() => {
@@ -841,6 +975,8 @@ setInterval("sentenceColoring()", 10000);
 // 2.プレビュー関連
 
 function updatePreview(){
+  console.log(getArrayOfSyntaxError());
+  
   updateFlowData(flow_data);
   const maxDeepness = getMaxDeepnessIn(flow_data);
   const maxAlignX = getMaxAlignXIn(flow_data);
@@ -933,6 +1069,7 @@ canvas.height = 100;
 let rectW = 170;
 let rectH = 85;
 const padding = 120;
+let previewFontSize = 16;
 
 // canvasの情報
 // let info = {
@@ -966,7 +1103,7 @@ function calcAlignX(flow_data){
 
 function ctxInit(ctx){
   ctx.textAlign = "center";
-  ctx.font = "16px serif";
+  ctx.font = String(previewFontSize)+"px serif";
 }
 
 function canvasInit(ctx,beforeCtxFillStyle){
@@ -1234,14 +1371,29 @@ function applyEditSettings(){
   
 }
 
+function editAllClear(){
+  let doesClear = window.confirm("本当に編集内容を全て破棄しますか?");
+  if(!doesClear) return;
+  
+  let lines = document.getElementsByClassName("editorLine");
+  while(lines.length > 1) lines[0].remove();
+  
+  lines[0].textContent = "";
+  lines[0].style.textIndent = "0em";
+}
+
 function applyPreviewSettings(){
   const rectWidthInput = document.getElementById("previewRectWidthInput");
   let rectWidth = Number(rectWidthInput.value);
   const rectHeightInput = document.getElementById("previewRectHeightInput");
   let rectHeight = Number(rectHeightInput.value);
   
+  const previewFontSizeInputVal = Number(document.getElementById("previewFontSizeInput").value);
+  
   rectW = rectWidth;
   rectH = rectHeight;
+  previewFontSize = previewFontSizeInputVal;
+  
   
   updatePreview();
 }
@@ -1318,7 +1470,11 @@ document.getElementById("textDataDownloadDialog").addEventListener("close",(e) =
 });
 
 document.getElementById("editorFontSizeInput").addEventListener("change",(e)=>{
-  document.getElementById("fontPreview").style.fontSize = String(document.getElementById("editorFontSizeInput").value)+"px";
+  document.getElementById("editorFontPreview").style.fontSize = String(document.getElementById("editorFontSizeInput").value)+"px";
+});
+
+document.getElementById("previewFontSizeInput").addEventListener("change", (e) => {
+  document.getElementById("previewFontPreview").style.fontSize = String(document.getElementById("previewFontSizeInput").value)+"px";
 });
 
 document.getElementById("textDataFileInput").addEventListener("change",(e)=>{
