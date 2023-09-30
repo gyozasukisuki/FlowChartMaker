@@ -95,7 +95,7 @@
   
   <div id="footer">
     <div style="display:inline; vertical-align:middle">
-      <input type="button" style="display:block;margin-top:25px;height:30px;" value="サンプルファイルを開く" onclick="openSample()" />
+      <input type="button" style="display:block;margin-top:25px;height:30px;" value="サンプルファイルを開く" onclick="if(window.confirm('本当にサンプルファイルを開きますか?\n現在の編集内容は破棄されます。')) openSample()" />
     </div>
     <div id="textDataUploadDiv" style="display:inline;vertical-align:middle;right:0;" title="フローチャートを生成するテキストデータをtext形式でアップロードします">
       <label for="textDataFileInput" style="display:inline">生成テキストのアップロード</label><input id="textDataFileInput" type="file" accept="text/plain"/><img width="35px" height="35px" src="./images/upload_icon.png"/>
@@ -137,11 +137,16 @@
     <h2 style="text-align:center;">
       エラーメッセージ一覧
     </h2>
+    
     <div id="errorsDialogMassageDiv" style="width:50vw; height:50vh;overflow:auto;padding:20px;">
       
     </div>
-    
-    <button style="background-color:blue; color:white;display:block;margin-left:auto;margin-top:10px;" onclick="document.getElementById('errorsDialog').close('close')">閉じる</button>
+    <hr>
+    <p>エラーメッセージに関する補足</p>
+    <p style="text-indent:1em">
+      エラーメッセージ内の「次の行」「前の行」は次の(前の)<b>空白のみでない</b>行を指しています。
+    </p>
+    <button id="errorsDialogCloseButton" style="background-color:blue; color:white;display:block;margin-left:auto;margin-top:10px;" onclick="document.getElementById('errorsDialog').close('close')">閉じる</button>
   </dialog>
   
   <script src="https://www.openjs.com/scripts/events/keyboard_shortcuts/shortcut.js"></script>
