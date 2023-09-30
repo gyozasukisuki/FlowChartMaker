@@ -320,8 +320,8 @@ function updateFlowData(data){
     let indentLevel = Number(indentText.substr(0,indentText.length-2));
     
     lineTexts.push(htmlTexts[i].trim());
-    // if 消したほうがいいかも2023/09/29
-    if(!htmlTexts[i].trim() == "") indentations.push(indentLevel);
+    
+    indentations.push(indentLevel);
   }
   
   // 空に
@@ -329,7 +329,7 @@ function updateFlowData(data){
   
   // ""(空文字)の部分は取り除く
   for(let i=0; i<lineTexts.length; i++){
-    if(lineTexts[i] == ""){
+    if(lineTexts[i].trim() == ""){
       indentations.splice(i,1);
       lineTexts.splice(i,1);
     }
@@ -627,6 +627,8 @@ function getArrayOfSyntaxError(){
   }
   
   if(lineTexts.length != indentations.length) console.error("lineTextsとindentationsの長さが異なります(getArrayOfSyntaxError内)");
+  if(lineTexts.length != typeNums.length) console.error("lineTextsとtypeNumsの長さが異なります(getArrayOfSyntaxError内)");
+  if(lineTexts.length != lineIdx.length) console.error("lineTextsとlineIdxの長さが異なります(getArrayOfSyntaxError内)");
   
   let res = [];
   
@@ -709,7 +711,7 @@ function getArrayOfSyntaxError(){
         
         let beforeLoopStart = false;
         
-        for(let j=i-1; i>=0; i--){
+        for(let j=i-1; i>=0; j--){
           if(typeNums[j] !== changeTypeNameToTypeNum("ループ始端") && indentations[j] === indentations[i]) break;
           
           if(typeNums[j] === changeTypeNameToTypeNum("ループ始端") && indentations[j] === indentations[i]){
@@ -720,8 +722,7 @@ function getArrayOfSyntaxError(){
         
         if(!beforeLoopStart) res.push(`${lineIdx[i]}行目:ループ終端の行に対応するループ始端の行が見つかりませんでした。もしくは対応するループ始端の行の後に${lineIdx[i]}行目とインデントが同じ行がありました。`);
         
-        if(i === 0) break;
-        if(indentations[i] -1 !== indentations[i-1]) res.push(`${lineIdx[i]}行目:ループ終端の行の次の行のインデントが、${lineIdx[i]}行目のインデント-1になっていません。`);
+        
         
         break;
     }
