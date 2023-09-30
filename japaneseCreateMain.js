@@ -753,9 +753,18 @@ function updateErrorsDialogWith(errors){
 
 function showErrorsDialog(){
   document.getElementById("errorsDialog").showModal();
+  document.getElementById("errorsDialogCloseButton").focus();
 }
 
 // shortcut.jsを用いたショートカットキーたち
+
+shortcut.add("Ctrl+Alt+e",() => {
+  showErrorsDialog();
+});
+
+shortcut.add("Ctrl+Alt+j",() => {
+  document.getElementsByClassName("editorLine")[0].focus();
+});
 
 shortcut.add("Ctrl+Alt+Enter",() => {
   updatePreview();
