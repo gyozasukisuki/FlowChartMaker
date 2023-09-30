@@ -84,7 +84,12 @@ function fixIndexes(){
   
   indexes = document.getElementsByClassName("indexes");
   
-  for(let i=1; i<=indexes.length; i++) indexes[i-1].textContent = String(i),indexes[i-1].style.fontSize = lines[0].style.fontSize;
+  for(let i=1; i<=indexes.length; i++){
+    indexes[i-1].textContent = String(i),indexes[i-1].style.fontSize = lines[0].style.fontSize;
+    
+    indexes[i-1].style.marginTop = String( (lines[i-1].offsetHeight-Number(lines[0].style.fontSize.substring(0,lines[0].style.fontSize.length-2)))/2 )+"px";
+    indexes[i-1].style.marginBottom = String( (lines[i-1].offsetHeight-Number(lines[0].style.fontSize.substring(0,lines[0].style.fontSize.length-2))) )+"px";
+  }
   
   console.log(indexes);
 }
@@ -315,6 +320,7 @@ function updateFlowData(data){
     let indentLevel = Number(indentText.substr(0,indentText.length-2));
     
     lineTexts.push(htmlTexts[i].trim());
+    // if 消したほうがいいかも2023/09/29
     if(!htmlTexts[i].trim() == "") indentations.push(indentLevel);
   }
   
@@ -592,6 +598,8 @@ function updateFlowData(data){
   console.log("updateFlowData");
 }
 
+// Error関連
+
 function getArrayOfSyntaxError(){
   const htmlTexts = getInformationsOf("htmlText");
   const lineTexts = getLineTextsBy(htmlTexts);
@@ -721,6 +729,27 @@ function getArrayOfSyntaxError(){
   }
   
   return res;
+}
+
+function updateErrorsDialogWith(errors){
+  let errorsMassageDiv = document.getElementById("errorsDialogMassageDiv");
+  
+  while(errorsMassageDiv.firstChild){
+    errorsMassageDiv.removeChild(errorsMassageDiv.firstChild);
+  }
+  
+  for(let i=0; i<errors.length; i++){
+    let errorMassage = document.createElement("p");
+    errorMassage.textContent = errors[i];
+    
+    errorsMassageDiv.appendChild(errorMassage);
+  }
+  
+  document.getElementById("displayErrorsButton").value = "エラーを表示("+String(errors.length)+"件)";
+}
+
+function showErrorsDialog(){
+  document.getElementById("errorsDialog").showModal();
 }
 
 // shortcut.jsを用いたショートカットキーたち
@@ -975,7 +1004,9 @@ setInterval("sentenceColoring()", 10000);
 // 2.プレビュー関連
 
 function updatePreview(){
-  console.log(getArrayOfSyntaxError());
+  const errors = getArrayOfSyntaxError();
+  console.log(errors);
+  updateErrorsDialogWith(errors);
   
   updateFlowData(flow_data);
   const maxDeepness = getMaxDeepnessIn(flow_data);
@@ -990,7 +1021,7 @@ function updatePreview(){
   sentenceColoring();
 }
 
-//以下、script.jsのコピー
+
 
 // sequence -> flow_data = [(data1),(data2), ...] (dataN) = [(int)Type,[(int)To1,(int)To2, ...],(String)text,(int)align-x,(int)deepness,(auto)Other];
 // ただし、align-x,deepnessは0-indexed
