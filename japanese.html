@@ -31,7 +31,7 @@
       <div class="indexes">1</div>
     </div>
     <div id="linesDiv" style="width:100%">
-      <pre class="editorLine" style="text-indent:0em;" contenteditable="true"></pre>
+      <pre class="editorLine" style="font-size:20px;text-indent:0em;" contenteditable="true"></pre>
     </div>
   </div>
   
@@ -42,6 +42,7 @@
   <div id="previewBlock" style="margin-top:100px;">
     <canvas id="previewCanvas"></canvas>
     <input id="updatePreviewButton" type="button" value="プレビュー更新" onclick="updatePreview()" title="プレビューを更新します"/>
+    <input id="displayErrorsButton" type="button" value="エラーを表示(0件)" onclick="showErrorsDialog()" title="エラーがあればそれらのエラーメッセージを表示します"/>
   </div>
   
   
@@ -52,11 +53,19 @@
     </h1>
     <hr>
     
-    <label class="settingChar" style="margin-right:10px;" for="previewRectWidthInput">記号の横幅(px)</label>
-    <input id="previewRectWidthInput" value="170" min="1" max="300" type="number" title="記号の横幅を指定します(デフォルト170px)"/>
+    <div>
+      <label class="settingChar" style="margin-right:10px;" for="previewRectWidthInput">記号の横幅(px)</label>
+      <input id="previewRectWidthInput" value="170" min="1" max="300" type="number" title="記号の横幅を指定します(デフォルト170px)"/>
+
+      <label class="settingChar" style="margin-right:10px;" for="previewRectHeightInput">記号の高さ(px)</label>
+      <input id="previewRectHeightInput" value="85" min="1" max="300" type="number" title="記号の高さを指定します(デフォルト85px)"/>
+    </div>
     
-    <label class="settingChar" style="margin-right:10px;" for="previewRectHeightInput">記号の高さ(px)</label>
-    <input id="previewRectHeightInput" value="85" min="1" max="300" type="number" title="記号の高さを指定します(デフォルト85px)"/>
+    <div style="margin-top:20px">
+      <label class="settingChar" for="previewFontSizeInput">記号内フォントのサイズ一括指定(px)</label>
+      <input id="previewFontSizeInput" value="16" min="1" max="50" type="number" title="プレビュー中のすべての記号内フォントのサイズを一括で指定します(デフォルト16px)"/>
+      <span class="settingChar" style="font-size:20" id="previewFontPreview">あa</span>
+    </div>
     
     <div style="display:block; text-align:right;">
       <input style="margin-right:20px;background-color:white;" type="button" value="適用" onclick="applyPreviewSettings()" title="入力された設定を適用します"/>
@@ -69,13 +78,19 @@
     </h1>
     <hr>
     
-    <label class="settingChar" style="margin-right:10px;" for="editorFontSizeInput">フォントのサイズ(px)</label>
-    <input id="editorFontSizeInput" value="20" min="1" max="50" type="number" title="エディターでのフォントのサイズを指定します(デフォルト20px)"/>
-    <span class="settingChar" style="font-size:20" id="fontPreview">あa</span>
+    <div>
+      <label class="settingChar" style="margin-right:10px;" for="editorFontSizeInput">フォントのサイズ(px)</label>
+      <input id="editorFontSizeInput" value="20" min="1" max="50" type="number" title="エディタでのフォントのサイズを指定します(デフォルト20px)"/>
+      <span class="settingChar" style="font-size:20" id="editorFontPreview">あa</span>
+    </div>
+    
     
     <div style="display:block; text-align:right;">
       <input style="margin-right:20px;background-color:white;" type="button" value="適用" onclick="applyEditSettings()" title="入力された設定を適用します"/>
     </div>
+    
+    <hr>
+    <input id="editAllClearButton" type="button" value="編集内容を破棄" onclick="editAllClear()"/>
   </div>
   
   <div id="footer">
@@ -116,6 +131,17 @@
     
     <button class="dialog-n" onclick="document.getElementById('flowChartDownloadDialog').close('Cancel')">キャンセル(<u>n</u>)</button>
     <button class="dialog-y" style="background-color:blue; color:white" onclick="document.getElementById('flowChartDownloadDialog').close('Download')">ダウンロード(<u>y</u>)</button>
+  </dialog>
+  
+  <dialog id="errorsDialog" style="z-index:12; border:3px red solid;">
+    <h2 style="text-align:center;">
+      エラーメッセージ一覧
+    </h2>
+    <div id="errorsDialogMassageDiv" style="width:50vw; height:50vh;overflow:auto;padding:20px;">
+      
+    </div>
+    
+    <button style="background-color:blue; color:white;display:block;margin-left:auto;margin-top:10px;" onclick="document.getElementById('errorsDialog').close('close')">閉じる</button>
   </dialog>
   
   <script src="https://www.openjs.com/scripts/events/keyboard_shortcuts/shortcut.js"></script>
