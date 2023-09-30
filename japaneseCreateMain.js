@@ -195,6 +195,7 @@ function getLineTextsBy(htmlTexts){
   for(let i=0; i<lineTexts.length; i++){
     if(lineTexts[i] == ""){
       lineTexts.splice(i,1);
+      i--; // spliceでlineTexts.lengthが小さくなるためiをデクリメントしても結果的にはlineTexts.length回ループが回る
     }
   }
   return lineTexts;
@@ -332,6 +333,7 @@ function updateFlowData(data){
     if(lineTexts[i].trim() == ""){
       indentations.splice(i,1);
       lineTexts.splice(i,1);
+      i--;// spliceでlineTexts(indentations).lengthが小さくなるためiをデクリメントしても結果的にはlineTexts.length回ループが回る
     }
   }
   
